@@ -210,12 +210,26 @@ export async function getPickingLines(client: OdooClient, pickingId: number): Pr
     }
   }
 
+  const productIds = [...new Set(rows.map((row) => row.product_id[0]))];
+  const slByProductId = new Map<number, string | null>();
+  if (productIds.length > 0) {
+    const productRows = await client.searchRead(
+      "product.product",
+      [["id", "in", productIds]],
+      ["id", "x_studio_sl"]
+    );
+    for (const row of productRows) {
+      slByProductId.set(row.id, row.x_studio_sl || null);
+    }
+  }
+
   return rows.map((row) => ({
     id: row.id,
     productId: row.product_id[0],
     productName: row.product_id[1],
     productDescription: row.x_studio_desc_on_order || null,
     productBarcode: null,
+    productSl: slByProductId.get(row.product_id[0]) ?? null,
     requestedQty: demandByMoveId.get(row.move_id[0]) ?? row.quantity,
     quantity: row.quantity,
     picked: row.picked,

@@ -332,6 +332,7 @@ async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
                         ? `<div class="line-description">${escapeHtml(line.productDescription)}</div>`
                         : ""
                     }
+                    <div class="muted line-sl">SL ${escapeHtml(line.productSl ?? "—")}</div>
                     <div class="muted line-locations">${escapeHtml(line.locationName)} → ${escapeHtml(
           line.locationDestName
         )}</div>
@@ -439,6 +440,7 @@ async function mountPickingDetail(root: HTMLElement, picking: Picking) {
                     ? `<div class="line-description">${escapeHtml(line.productDescription)}</div>`
                     : ""
                 }
+                <div class="muted line-sl">SL ${escapeHtml(line.productSl ?? "—")}</div>
                 <div class="muted line-locations">${escapeHtml(line.locationName)} → ${escapeHtml(
           line.locationDestName
         )}</div>

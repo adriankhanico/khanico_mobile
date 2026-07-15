@@ -27,6 +27,7 @@ export interface PickingLine {
   productName: string;
   productDescription: string | null;
   productBarcode: string | null;
+  productSl: string | null;
   requestedQty: number;
   quantity: number;
   picked: boolean;
