@@ -675,4 +675,5 @@ async function mountPickingDetail(root: HTMLElement, picking: Picking) {
   }
 
   await refreshLines();
+  scanInput.focus();
 }
