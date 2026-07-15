@@ -9,6 +9,23 @@ import { mountPickingRoute } from "./pages/scan-picking";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
+const THEME_STORAGE_KEY = "khanico-theme";
+
+function applyTheme(theme: "light" | "dark") {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  const toggle = document.querySelector<HTMLButtonElement>("#theme-toggle-btn");
+  if (toggle) {
+    toggle.innerHTML = icon(theme === "dark" ? "sun" : "moon");
+    toggle.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+  }
+}
+
+function initTheme() {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  applyTheme(stored === "dark" ? "dark" : "light");
+}
+
 interface Route {
   mount: (root: HTMLElement, segments: string[]) => void;
 }
@@ -58,6 +75,7 @@ function mountHeader() {
       <img class="app-wordmark" src="/images/khanico-logo-blue.png" alt="Khanico" />
       <div class="app-header-right">
         <span id="current-user" class="current-user"></span>
+        <button id="theme-toggle-btn" type="button" class="theme-toggle-btn" aria-label="Switch to dark mode">${icon("moon")}</button>
         <button id="logout-btn" type="button" class="logout-btn" aria-label="Log out">${icon("log-out")}</button>
       </div>
     </div>
@@ -73,6 +91,12 @@ function mountHeader() {
     window.location.hash = "/login";
     window.location.reload();
   });
+
+  header.querySelector<HTMLButtonElement>("#theme-toggle-btn")!.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    applyTheme(current === "dark" ? "light" : "dark");
+  });
+  initTheme();
 }
 
 function mountBottomNav() {
