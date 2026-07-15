@@ -1,0 +1,30 @@
+{
+  "name": "Khanico Mobile",
+  "short_name": "Khanico",
+  "description": "Warehouse picking, sales orders, and inventory search for Odoo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f6fc",
+  "theme_color": "#0e39d6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
