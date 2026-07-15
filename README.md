@@ -1,4 +1,4 @@
-# Ventor Mobile
+# Khanico Mobile
 
 Custom warehouse/inventory mobile PWA integrating with Odoo 17/18, built to replace the commercial "Ventor" app for this deployment.
 
@@ -21,3 +21,7 @@ npm run dev:client                   # http://localhost:5173
 ## Security
 
 The Odoo API key lives only in `server/.env` (gitignored) and is never sent to the browser. The PWA has its own independent login, decoupled from Odoo credentials.
+
+## Deployment
+
+See [DEPLOY.md](DEPLOY.md) for deploying via Docker Compose.

@@ -1,5 +1,5 @@
 {
-  "name": "@ventor/client",
+  "name": "@khanico/client",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ventor/shared": "*",
+    "@khanico/shared": "*",
     "@zxing/browser": "^0.2.1",
     "lucide-static": "^1.24.0"
   },

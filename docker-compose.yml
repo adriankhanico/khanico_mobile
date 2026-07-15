@@ -1,7 +1,7 @@
 services:
-  ventor-mobile:
+  khanico-mobile:
     build: .
-    container_name: ventor-mobile
+    container_name: khanico-mobile
     restart: unless-stopped
     ports:
       - "3001:3001"

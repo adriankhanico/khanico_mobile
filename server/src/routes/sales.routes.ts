@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { SaleOrderCreateInput, SaleOrderLineInput } from "@ventor/shared";
+import type { SaleOrderCreateInput, SaleOrderLineInput } from "@khanico/shared";
 import { createOdooClientForUser } from "../odoo/client.js";
 import {
   addSaleOrderLine,

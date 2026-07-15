@@ -1,4 +1,4 @@
-import type { Product, SaleOrderDetail, SaleOrderLine, SaleOrderSummary } from "@ventor/shared";
+import type { Product, SaleOrderDetail, SaleOrderLine, SaleOrderSummary } from "@khanico/shared";
 
 /** Zeroes out price fields for non-admin users. Shape/types stay intact; the client decides whether to render the (now-zero) value based on its own admin flag — this only stops the real number from ever reaching a non-admin's browser. */
 export function redactProductPrices<T extends Product>(product: T): T {

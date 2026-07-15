@@ -6,7 +6,7 @@ import type {
   PickingTypeGroup,
   PickingTypeSettings,
   ValidatePickingResult,
-} from "@ventor/shared";
+} from "@khanico/shared";
 import type { OdooClient } from "./client.js";
 
 const STATUS_FILTER_STATES: Record<Exclude<PickingStatusFilter, "all">, string[]> = {
@@ -20,7 +20,7 @@ interface AllowedScope {
 }
 
 /**
- * Ventor's own res.users.allowed_picking_type_ids/allowed_warehouse_ids restrict which
+ * res.users.allowed_picking_type_ids/allowed_warehouse_ids restrict which
  * operation types and warehouses a user should see, but Odoo's own record rules only
  * enforce this on stock.picking.type itself, not on stock.picking — so it must be
  * applied explicitly here on every picking query.

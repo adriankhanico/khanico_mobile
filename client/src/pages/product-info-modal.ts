@@ -1,4 +1,4 @@
-import type { LocationOption, ProductDetail } from "@ventor/shared";
+import type { LocationOption, ProductDetail } from "@khanico/shared";
 import { apiErrorMessage, apiGet, apiPost, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
 import { HidScanner } from "../lib/scanner/hid-scanner";

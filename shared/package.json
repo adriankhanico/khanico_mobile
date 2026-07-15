@@ -1,5 +1,5 @@
 {
-  "name": "@ventor/shared",
+  "name": "@khanico/shared",
   "private": true,
   "version": "0.1.0",
   "main": "types.ts",

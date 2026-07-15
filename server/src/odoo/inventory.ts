@@ -1,4 +1,4 @@
-import type { LocationOption, MoveStockRequest, Product, ProductDetail, StockLocationQty } from "@ventor/shared";
+import type { LocationOption, MoveStockRequest, Product, ProductDetail, StockLocationQty } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
 
 /** Resolves the warehouse's "Internal Transfers" operation type (Odoo sequence_code "INT"). */
@@ -199,7 +199,7 @@ export async function moveStock(client: OdooClient, productId: number, move: Mov
             product_uom_qty: move.quantity,
             location_id: move.sourceLocationId,
             location_dest_id: move.destLocationId,
-            name: "Ventor stock move",
+            name: "Khanico Mobile stock move",
           },
         ],
       ],

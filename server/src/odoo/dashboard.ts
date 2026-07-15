@@ -1,4 +1,4 @@
-import type { DashboardSummary } from "@ventor/shared";
+import type { DashboardSummary } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
 import { listOpenPickingsGrouped } from "./picking.js";
 import { countDraftSaleOrders, searchSaleOrders } from "./sales.js";

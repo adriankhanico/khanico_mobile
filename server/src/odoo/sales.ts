@@ -4,7 +4,7 @@ import type {
   SaleOrderCreateInput,
   SaleOrderDetail,
   SaleOrderSummary,
-} from "@ventor/shared";
+} from "@khanico/shared";
 import type { OdooClient } from "./client.js";
 
 export async function countDraftSaleOrders(client: OdooClient): Promise<number> {

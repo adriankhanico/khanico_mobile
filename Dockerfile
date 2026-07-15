@@ -16,7 +16,7 @@ RUN npm run build:client
 RUN npm run build:server
 
 # --- runtime ---
-# @ventor/shared is a workspace-only, types-only package ("*" in
+# @khanico/shared is a workspace-only, types-only package ("*" in
 # server/package.json dependencies) — it doesn't exist on the npm registry,
 # so npm install must run with the full workspace root present, or it'll
 # 404 trying to fetch it. Simplest correct way: reuse the same root install,

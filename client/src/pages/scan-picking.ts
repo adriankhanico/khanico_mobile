@@ -5,7 +5,7 @@ import type {
   PickingStatusFilter,
   PickingTypeGroup,
   ValidatePickingResult,
-} from "@ventor/shared";
+} from "@khanico/shared";
 import { apiErrorMessage, apiGet, apiPost } from "../lib/api-client";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 import { createCameraScanner, type CameraScanner } from "../lib/scanner/camera-scanner";

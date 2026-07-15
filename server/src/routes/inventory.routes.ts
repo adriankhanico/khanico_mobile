@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { MoveStockRequest } from "@ventor/shared";
+import type { MoveStockRequest } from "@khanico/shared";
 import { createOdooClientForUser } from "../odoo/client.js";
 import {
   getProductDetail,

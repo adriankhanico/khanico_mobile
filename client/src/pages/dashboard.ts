@@ -1,4 +1,4 @@
-import type { DashboardSummary } from "@ventor/shared";
+import type { DashboardSummary } from "@khanico/shared";
 import { apiGet, getCurrentUserName, isAdmin } from "../lib/api-client";
 import { icon, type IconName } from "../lib/icons";
 

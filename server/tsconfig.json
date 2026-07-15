@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {
-      "@ventor/shared": ["../shared/types.ts"]
+      "@khanico/shared": ["../shared/types.ts"]
     }
   },
   "include": ["src", "../shared/types.ts"]

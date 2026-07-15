@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { PickingStatusFilter, ScanRequest } from "@ventor/shared";
+import type { PickingStatusFilter, ScanRequest } from "@khanico/shared";
 import { createOdooClientForUser } from "../odoo/client.js";
 import {
   confirmMoveLine,
@@ -19,7 +19,7 @@ import {
 export const pickingRouter = Router();
 
 // Blocks access to a picking whose type/warehouse falls outside the logged-in user's
-// Ventor allowed_picking_type_ids/allowed_warehouse_ids, closing a gap where Odoo's own
+// allowed_picking_type_ids/allowed_warehouse_ids, closing a gap where Odoo's own
 // record rules restrict stock.picking.type reads but not stock.picking itself.
 pickingRouter.param("id", async (req, res, next, idParam) => {
   const pickingId = Number(idParam);

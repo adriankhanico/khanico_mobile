@@ -1,4 +1,4 @@
-import type { Product } from "@ventor/shared";
+import type { Product } from "@khanico/shared";
 import { apiGet, isAdmin } from "../lib/api-client";
 import { createCameraScanner, type CameraScanner } from "../lib/scanner/camera-scanner";
 import { HidScanner } from "../lib/scanner/hid-scanner";

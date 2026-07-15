@@ -28,7 +28,7 @@ app.use(
 
 app.use(
   session({
-    name: "ventor.sid",
+    name: "khanico.sid",
     secret: config.sessionSecret,
     resave: false,
     saveUninitialized: false,
@@ -63,5 +63,5 @@ app.use("/api", salesRouter);
 app.use(errorHandler);
 
 app.listen(config.port, () => {
-  console.log(`Ventor BFF listening on http://localhost:${config.port}`);
+  console.log(`Khanico Mobile BFF listening on http://localhost:${config.port}`);
 });

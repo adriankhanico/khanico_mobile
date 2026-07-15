@@ -1,4 +1,4 @@
-import type { Product, SaleOrderDetail } from "@ventor/shared";
+import type { Product, SaleOrderDetail } from "@khanico/shared";
 import { apiDelete, apiErrorMessage, apiGet, apiPost, apiPut, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
 import { HidScanner } from "../lib/scanner/hid-scanner";

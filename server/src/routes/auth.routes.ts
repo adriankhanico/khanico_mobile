@@ -46,7 +46,7 @@ authRouter.post("/login", loginLimiter, async (req, res) => {
 authRouter.post("/logout", (req, res, next) => {
   req.session.destroy((err) => {
     if (err) return next(err);
-    res.clearCookie("ventor.sid");
+    res.clearCookie("khanico.sid");
     res.json({ ok: true });
   });
 });

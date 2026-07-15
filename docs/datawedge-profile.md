@@ -7,7 +7,7 @@ This app reads hardware barcode scans via **keyboard-wedge (HID) output** — th
 Do not edit the default DataWedge profile — create a new one scoped only to the browser used to run this PWA, so scanner behavior doesn't leak into other apps on the device.
 
 1. Open **DataWedge** on the Zebra device (usually pre-installed; if not, install from Zebra's site for the device model).
-2. Tap **+ New profile**, name it e.g. `VentorMobilePWA`.
+2. Tap **+ New profile**, name it e.g. `KhanicoMobilePWA`.
 3. Under **Associated apps**, add the browser package used to launch the PWA (e.g. Chrome — `com.android.chrome`, or the specific browser/PWA-install package if using a installed home-screen shortcut). Restrict to this app only.
 
 ## Barcode Input plugin
