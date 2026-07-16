@@ -14,6 +14,16 @@ const STATUS_FILTER_STATES: Record<Exclude<PickingStatusFilter, "all">, string[]
   done: ["done"],
 };
 
+/**
+ * stock.picking.type's display name is Odoo's default "{company}: {type name}"
+ * many2one label (e.g. "Khanico Limited: Delivery Orders"). The company prefix
+ * isn't useful here, so only the part after the last ": " is shown.
+ */
+function stripCompanyPrefix(displayName: string): string {
+  const separatorIndex = displayName.lastIndexOf(": ");
+  return separatorIndex === -1 ? displayName : displayName.slice(separatorIndex + 2);
+}
+
 interface AllowedScope {
   pickingTypeIds: number[] | null;
   warehouseIds: number[] | null;
@@ -105,7 +115,7 @@ export async function listOpenPickings(
     id: row.id,
     name: row.name,
     pickingTypeId: row.picking_type_id[0],
-    pickingTypeName: row.picking_type_id[1],
+    pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
     state: row.state,
     origin: row.origin || null,
     partnerName: row.partner_id ? row.partner_id[1] : null,
@@ -157,7 +167,7 @@ export async function getPicking(client: OdooClient, pickingId: number): Promise
     id: row.id,
     name: row.name,
     pickingTypeId: row.picking_type_id[0],
-    pickingTypeName: row.picking_type_id[1],
+    pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
     state: row.state,
     origin: row.origin || null,
     partnerName: row.partner_id ? row.partner_id[1] : null,
