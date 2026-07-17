@@ -1,6 +1,7 @@
 import type { DashboardSummary } from "@khanico/shared";
 import { apiGet, getCurrentUserName, isAdmin } from "../lib/api-client";
-import { icon, type IconName } from "../lib/icons";
+import { icon } from "../lib/icons";
+import { iconForPickingType } from "../lib/picking-type-icon";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -28,20 +29,6 @@ function greeting(): string {
 
 function firstName(): string {
   return getCurrentUserName().trim().split(/\s+/)[0] ?? "";
-}
-
-const CATEGORY_ICONS: { match: RegExp; icon: IconName }[] = [
-  { match: /deliver/i, icon: "truck" },
-  { match: /pick/i, icon: "shopping-cart" },
-  { match: /return/i, icon: "undo-2" },
-  { match: /internal|quarantine/i, icon: "refresh-cw" },
-  { match: /receipt/i, icon: "inbox" },
-  { match: /put ?away|pack/i, icon: "package" },
-];
-
-function iconForCategory(name: string): string {
-  const match = CATEGORY_ICONS.find((c) => c.match.test(name))?.icon ?? "package";
-  return icon(match);
 }
 
 export async function mountDashboard(root: HTMLElement) {
@@ -113,7 +100,7 @@ export async function mountDashboard(root: HTMLElement) {
           .map(
             (c) => `
               <a href="#/picking/${c.pickingTypeId}" class="task-tile">
-                <span class="task-tile-icon">${iconForCategory(c.pickingTypeName)}</span>
+                <span class="task-tile-icon">${iconForPickingType(c.pickingTypeName)}</span>
                 <span class="task-tile-count">${formatCount(c.count)}</span>
                 <span class="task-tile-label">${escapeHtml(c.pickingTypeName)}</span>
               </a>`

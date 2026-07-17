@@ -10,6 +10,7 @@ import { apiErrorMessage, apiGet, apiPost } from "../lib/api-client";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 import { createCameraScanner, type CameraScanner } from "../lib/scanner/camera-scanner";
 import { icon } from "../lib/icons";
+import { iconForPickingType } from "../lib/picking-type-icon";
 import { openProductInfoModal } from "./product-info-modal";
 
 function escapeHtml(value: string): string {
@@ -67,7 +68,7 @@ async function loadCategoryList(root: HTMLElement) {
         placeholder="Search by transfer #, source doc, or name"
         autocomplete="off"
       />
-      <div id="category-results" class="results"></div>
+      <div id="category-results" class="task-tiles"></div>
       <div id="search-results" class="results hidden"></div>
     </section>
   `;
@@ -81,9 +82,10 @@ async function loadCategoryList(root: HTMLElement) {
       groups
         .map(
           (g) => `
-            <div class="result-row category-row" data-picking-type-id="${g.pickingTypeId}">
-              <strong>${escapeHtml(g.pickingTypeName)}</strong>
-              <span class="badge">${g.pickings.length}</span>
+            <div class="task-tile" data-picking-type-id="${g.pickingTypeId}">
+              <span class="task-tile-icon">${iconForPickingType(g.pickingTypeName)}</span>
+              <span class="task-tile-count">${g.pickings.length}</span>
+              <span class="task-tile-label">${escapeHtml(g.pickingTypeName)}</span>
             </div>`
         )
         .join("") || `<p class="muted">No open transfers.</p>`;
