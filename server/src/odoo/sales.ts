@@ -1,11 +1,13 @@
 import type {
   HoseIntegrityStatus,
   Partner,
+  Picking,
   SaleOrderCreateInput,
   SaleOrderDetail,
   SaleOrderSummary,
 } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
+import { stripCompanyPrefix } from "./picking.js";
 
 export async function countDraftSaleOrders(client: OdooClient): Promise<number> {
   return client.searchCount("sale.order", [["state", "=", "draft"]]);
@@ -103,10 +105,30 @@ export async function getSaleOrderDetail(
       "is_hose_order",
       "hose_can_toggle",
       "hose_integrity_status",
+      "picking_ids",
     ]
   );
   if (orders.length === 0) return null;
   const order = orders[0];
+
+  let pickings: Picking[] = [];
+  if (order.picking_ids?.length > 0) {
+    const pickingRows = await client.searchRead(
+      "stock.picking",
+      [["id", "in", order.picking_ids]],
+      ["id", "name", "picking_type_id", "state", "origin", "partner_id", "date_done"]
+    );
+    pickings = pickingRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      pickingTypeId: row.picking_type_id[0],
+      pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
+      state: row.state,
+      origin: row.origin || null,
+      partnerName: row.partner_id ? row.partner_id[1] : null,
+      dateDone: row.date_done || null,
+    }));
+  }
 
   const lineRows = await client.searchRead(
     "sale.order.line",
@@ -145,6 +167,7 @@ export async function getSaleOrderDetail(
     isHoseOrder: order.is_hose_order,
     hoseCanToggle: order.hose_can_toggle,
     hoseIntegrityStatus: (order.hose_integrity_status as HoseIntegrityStatus) || null,
+    pickings,
     lines: lineRows.map((row) => ({
       lineId: row.id,
       productId: row.product_id[0],

@@ -19,7 +19,7 @@ const STATUS_FILTER_STATES: Record<Exclude<PickingStatusFilter, "all">, string[]
  * many2one label (e.g. "Khanico Limited: Delivery Orders"). The company prefix
  * isn't useful here, so only the part after the last ": " is shown.
  */
-function stripCompanyPrefix(displayName: string): string {
+export function stripCompanyPrefix(displayName: string): string {
   const separatorIndex = displayName.lastIndexOf(": ");
   return separatorIndex === -1 ? displayName : displayName.slice(separatorIndex + 2);
 }

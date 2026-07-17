@@ -65,6 +65,30 @@ export async function mountSaleOrderEdit(root: HTMLElement, orderId: number) {
         </p>
         <p class="muted">${formatDate(order.dateOrder)} · ${escapeHtml(order.salespersonName ?? "—")}</p>
 
+        ${
+          order.pickings.length > 0
+            ? `
+              <h4>Related Transfers</h4>
+              <div class="results">
+                ${order.pickings
+                  .map(
+                    (p) => `
+                      <a href="#/picking/${p.pickingTypeId}/${p.id}" class="result-row">
+                        <div class="product-card-top">
+                          <strong>${escapeHtml(p.name)}</strong>
+                          <span class="state-pill state-${escapeHtml(p.state)}">${escapeHtml(p.state)}</span>
+                        </div>
+                        <div class="product-meta">
+                          <span>${escapeHtml(p.pickingTypeName)}</span>
+                        </div>
+                      </a>`
+                  )
+                  .join("")}
+              </div>
+            `
+            : ""
+        }
+
         <label>PO #</label>
         <input id="po-number" type="text" placeholder="Customer PO number" autocomplete="off" value="${escapeHtml(
           order.poNumber ?? ""

@@ -121,6 +121,7 @@ export interface SaleOrderDetail {
   hoseCanToggle: boolean;
   hoseIntegrityStatus: HoseIntegrityStatus | null;
   lines: SaleOrderLine[];
+  pickings: Picking[];
 }
 
 export interface SaleOrderCreateInput {
