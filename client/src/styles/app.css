@@ -623,6 +623,10 @@ a.result-row {
   margin-bottom: 1.5rem;
 }
 
+#category-results {
+  margin-top: 1rem;
+}
+
 .task-tile {
   display: flex;
   flex-direction: column;
