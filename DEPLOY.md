@@ -4,6 +4,56 @@ Target: an on-prem Linux server (Docker + Compose already installed), reachable
 directly on the local network — no reverse proxy, no TLS termination in front
 of it. A single container serves both the built PWA and the API on one port.
 
+**Server**: `10.6.0.77` (SSH user: `adrian`, key auth already set up — no
+password needed). App runs from `/opt/khanico-mobile`, exposed directly on
+`http://10.6.0.77:3001`, no login/VPN/VSCode required, just a terminal with
+`ssh`. Portainer (container UI, read-mostly for this app since it wasn't
+created through Portainer) is at `http://10.6.0.77:9000`.
+
+## Connecting and updating (the day-to-day loop)
+
+For a **code change** (anything in `client/`, `server/`, or `shared/`):
+
+1. On your own machine: commit and push the change to `main` on GitHub as normal.
+2. SSH into the server and redeploy:
+   ```bash
+   ssh adrian@10.6.0.77
+   cd /opt/khanico-mobile
+   git pull
+   docker compose up -d --build
+   ```
+3. Verify:
+   ```bash
+   curl http://localhost:3001/api/health
+   ```
+   should print `{"status":"ok"}`.
+
+For an **env-only change** (e.g. switching which Odoo instance it points at —
+edit `server/.env` on the server directly, it's gitignored and never touches
+git):
+```bash
+ssh adrian@10.6.0.77
+nano /opt/khanico-mobile/server/.env   # edit, save
+cd /opt/khanico-mobile
+docker compose up -d                   # no --build needed, env vars aren't baked into the image
+```
+
+Restarting the container (either path) logs everyone out — sessions are
+in-memory, see Notes below.
+
+To check whether the server is running the latest code:
+```bash
+git log --oneline -1                          # on your machine
+ssh adrian@10.6.0.77 "cd /opt/khanico-mobile && git log --oneline -1"   # on the server
+```
+If the commit hashes match and `git status --short` is empty on both sides,
+they're in sync.
+
+## First-time setup
+
+The steps below are only needed once, when standing the app up on a brand new
+server — not for routine updates (see above).
+
 ## 0. One-time server prerequisites
 
 - Docker + Docker Compose installed.
