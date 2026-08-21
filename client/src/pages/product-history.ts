@@ -1,4 +1,4 @@
-import type { StockMoveHistoryEntry } from "@khanico/shared";
+import type { StockMoveDirection, StockMoveHistoryEntry } from "@khanico/shared";
 import { apiGet } from "../lib/api-client";
 
 function escapeHtml(value: string): string {
@@ -24,16 +24,31 @@ function toDateInputValue(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+const DIRECTION_FILTERS: { value: StockMoveDirection | "all"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "incoming", label: "Incoming" },
+  { value: "outgoing", label: "Outgoing" },
+  { value: "internal", label: "Internal" },
+];
+
+const DIRECTION_LABELS: Record<StockMoveDirection, string> = {
+  incoming: "Incoming",
+  outgoing: "Outgoing",
+  internal: "Internal",
+};
+
 function renderHistoryEntry(entry: StockMoveHistoryEntry): string {
   const inner = `
     <div class="product-card-top">
       <strong>${entry.quantity}</strong>
-      <span class="muted">${escapeHtml(formatDateTime(entry.date))}</span>
+      <span class="state-pill direction-${entry.direction}">${DIRECTION_LABELS[entry.direction]}</span>
     </div>
     <div class="product-meta">
       <span>${escapeHtml(entry.sourceLocationName)} → ${escapeHtml(entry.destLocationName)}</span>
     </div>
-    ${entry.pickingName ? `<div class="muted">${escapeHtml(entry.pickingName)}</div>` : ""}
+    <div class="muted">${escapeHtml(formatDateTime(entry.date))}${
+    entry.pickingName ? ` · ${escapeHtml(entry.pickingName)}` : ""
+  }</div>
   `;
 
   return entry.pickingId && entry.pickingTypeId
@@ -75,6 +90,13 @@ export async function mountProductHistory(root: HTMLElement, segments: string[])
         </label>
       </div>
 
+      <div class="status-filter-row">
+        ${DIRECTION_FILTERS.map(
+          (f) =>
+            `<button type="button" class="status-filter-btn ${f.value === "all" ? "active" : ""}" data-direction="${f.value}">${f.label}</button>`
+        ).join("")}
+      </div>
+
       <div id="history-results" class="results"></div>
     </section>
   `;
@@ -84,10 +106,16 @@ export async function mountProductHistory(root: HTMLElement, segments: string[])
   const fromInput = root.querySelector<HTMLInputElement>("#history-from")!;
   const toInput = root.querySelector<HTMLInputElement>("#history-to")!;
   const resultsEl = root.querySelector<HTMLDivElement>("#history-results")!;
+  const filterButtons = root.querySelectorAll<HTMLButtonElement>("[data-direction]");
 
-  function renderEntries(entries: StockMoveHistoryEntry[]) {
+  let currentEntries: StockMoveHistoryEntry[] = [];
+  let currentDirection: StockMoveDirection | "all" = "all";
+
+  function renderEntries() {
+    const filtered =
+      currentDirection === "all" ? currentEntries : currentEntries.filter((e) => e.direction === currentDirection);
     resultsEl.innerHTML =
-      entries.map(renderHistoryEntry).join("") || `<p class="muted">No moves in this date range.</p>`;
+      filtered.map(renderHistoryEntry).join("") || `<p class="muted">No moves in this date range.</p>`;
   }
 
   async function loadHistory() {
@@ -96,10 +124,10 @@ export async function mountProductHistory(root: HTMLElement, segments: string[])
       const params = new URLSearchParams();
       if (dateFrom) params.set("from", dateFrom);
       if (dateTo) params.set("to", dateTo);
-      const entries = await apiGet<StockMoveHistoryEntry[]>(
+      currentEntries = await apiGet<StockMoveHistoryEntry[]>(
         `/inventory/${productId}/history?${params.toString()}`
       );
-      renderEntries(entries);
+      renderEntries();
     } catch {
       resultsEl.innerHTML = `<p class="error">Failed to load move history.</p>`;
     }
@@ -112,6 +140,14 @@ export async function mountProductHistory(root: HTMLElement, segments: string[])
   toInput.addEventListener("change", () => {
     dateTo = toInput.value;
     loadHistory();
+  });
+
+  filterButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentDirection = btn.dataset.direction as StockMoveDirection | "all";
+      filterButtons.forEach((b) => b.classList.toggle("active", b === btn));
+      renderEntries();
+    });
   });
 
   await loadHistory();

@@ -142,12 +142,15 @@ export interface LocationOption {
   barcode: string | null;
 }
 
+export type StockMoveDirection = "incoming" | "outgoing" | "internal";
+
 export interface StockMoveHistoryEntry {
   id: number;
   date: string | null;
   quantity: number;
   sourceLocationName: string;
   destLocationName: string;
+  direction: StockMoveDirection;
   pickingId: number | null;
   pickingTypeId: number | null;
   pickingName: string | null;

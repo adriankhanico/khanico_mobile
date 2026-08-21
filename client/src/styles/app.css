@@ -274,7 +274,8 @@ input {
 input[type="search"],
 input[type="text"],
 input[type="number"],
-input[type="password"] {
+input[type="password"],
+input[type="date"] {
   width: 100%;
   padding: 0.7rem 0.85rem;
   font-size: 0.95rem;
@@ -283,6 +284,14 @@ input[type="password"] {
   border: 1.5px solid var(--border);
   background: var(--card);
   color: var(--ink);
+}
+
+input[type="date"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] input[type="date"] {
+  color-scheme: dark;
 }
 
 input[type="search"]::placeholder,
@@ -702,6 +711,16 @@ a.result-row {
 .state-pill.state-cancel {
   background: var(--red-bg);
   color: var(--red);
+}
+
+.state-pill.direction-incoming {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.state-pill.direction-outgoing {
+  background: var(--stamp-bg);
+  color: var(--blue);
 }
 
 .status-filter-row {

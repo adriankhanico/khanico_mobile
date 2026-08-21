@@ -4,6 +4,7 @@ import type {
   Product,
   ProductDetail,
   StockLocationQty,
+  StockMoveDirection,
   StockMoveHistoryEntry,
 } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
@@ -173,12 +174,36 @@ export async function getProductMoveHistory(
     }
   }
 
+  const locationIds = [
+    ...new Set(rows.flatMap((row) => [row.location_id[0], row.location_dest_id[0]])),
+  ];
+  const usageByLocationId = new Map<number, string>();
+  if (locationIds.length > 0) {
+    const locationRows = await client.searchRead(
+      "stock.location",
+      [["id", "in", locationIds]],
+      ["id", "usage"]
+    );
+    for (const row of locationRows) {
+      usageByLocationId.set(row.id, row.usage);
+    }
+  }
+
+  function classifyDirection(sourceLocationId: number, destLocationId: number): StockMoveDirection {
+    const sourceIsInternal = usageByLocationId.get(sourceLocationId) === "internal";
+    const destIsInternal = usageByLocationId.get(destLocationId) === "internal";
+    if (sourceIsInternal && destIsInternal) return "internal";
+    if (!sourceIsInternal && destIsInternal) return "incoming";
+    return "outgoing";
+  }
+
   return rows.map((row) => ({
     id: row.id,
     date: row.date || null,
     quantity: row.quantity,
     sourceLocationName: row.location_id[1],
     destLocationName: row.location_dest_id[1],
+    direction: classifyDirection(row.location_id[0], row.location_dest_id[0]),
     pickingId: row.picking_id ? row.picking_id[0] : null,
     pickingTypeId: row.picking_id ? pickingTypeIdByPickingId.get(row.picking_id[0]) ?? null : null,
     pickingName: row.picking_id ? row.picking_id[1] : null,
