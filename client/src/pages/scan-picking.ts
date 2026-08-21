@@ -34,6 +34,11 @@ export function mountPickingRoute(root: HTMLElement, segments: string[]) {
   }
 }
 
+/** Completed/cancelled transfers show when they finished; anything still open shows its scheduled date. */
+function pickingDisplayDate(p: Picking): string | null {
+  return p.dateDone ?? p.scheduledDate;
+}
+
 function renderPickingRow(p: Picking): string {
   return `
     <div class="result-row" data-picking-id="${p.id}">
@@ -45,6 +50,7 @@ function renderPickingRow(p: Picking): string {
         <span>${escapeHtml(p.origin ?? "—")}</span>
         <span>${escapeHtml(p.partnerName ?? "—")}</span>
       </div>
+      <div class="muted">${escapeHtml(formatDateTime(pickingDisplayDate(p)))}</div>
     </div>`;
 }
 

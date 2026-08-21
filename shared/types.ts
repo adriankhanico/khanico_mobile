@@ -46,6 +46,7 @@ export interface Picking {
   state: string;
   origin: string | null;
   partnerName: string | null;
+  scheduledDate: string | null;
   dateDone: string | null;
 }
 

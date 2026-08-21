@@ -107,7 +107,7 @@ export async function listOpenPickings(
   const rows = await client.searchRead(
     "stock.picking",
     applyScopeToDomain(domain, scope),
-    ["id", "name", "picking_type_id", "state", "origin", "partner_id", "date_done"],
+    ["id", "name", "picking_type_id", "state", "origin", "partner_id", "scheduled_date", "date_done"],
     { limit: 200, order: "id desc" }
   );
 
@@ -119,6 +119,7 @@ export async function listOpenPickings(
     state: row.state,
     origin: row.origin || null,
     partnerName: row.partner_id ? row.partner_id[1] : null,
+    scheduledDate: row.scheduled_date || null,
     dateDone: row.date_done || null,
   }));
 }
@@ -159,7 +160,7 @@ export async function getPicking(client: OdooClient, pickingId: number): Promise
   const rows = await client.searchRead(
     "stock.picking",
     applyScopeToDomain([["id", "=", pickingId]], scope),
-    ["id", "name", "picking_type_id", "state", "origin", "partner_id", "date_done"]
+    ["id", "name", "picking_type_id", "state", "origin", "partner_id", "scheduled_date", "date_done"]
   );
   if (rows.length === 0) return null;
   const row = rows[0];
@@ -171,6 +172,7 @@ export async function getPicking(client: OdooClient, pickingId: number): Promise
     state: row.state,
     origin: row.origin || null,
     partnerName: row.partner_id ? row.partner_id[1] : null,
+    scheduledDate: row.scheduled_date || null,
     dateDone: row.date_done || null,
   };
 }

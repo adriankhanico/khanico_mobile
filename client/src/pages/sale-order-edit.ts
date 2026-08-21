@@ -80,6 +80,7 @@ export async function mountSaleOrderEdit(root: HTMLElement, orderId: number) {
                         </div>
                         <div class="product-meta">
                           <span>${escapeHtml(p.pickingTypeName)}</span>
+                          <span>${formatDate(p.dateDone ?? p.scheduledDate)}</span>
                         </div>
                       </a>`
                   )
