@@ -1,4 +1,11 @@
-import type { LocationOption, MoveStockRequest, Product, ProductDetail, StockLocationQty } from "@khanico/shared";
+import type {
+  LocationOption,
+  MoveStockRequest,
+  Product,
+  ProductDetail,
+  StockLocationQty,
+  StockMoveHistoryEntry,
+} from "@khanico/shared";
 import type { OdooClient } from "./client.js";
 
 /** Resolves the warehouse's "Internal Transfers" operation type (Odoo sequence_code "INT"). */
@@ -127,6 +134,54 @@ export async function getProductLocations(
     locationId: row.location_id[0],
     locationName: row.location_id[1],
     quantity: row.quantity,
+  }));
+}
+
+const DEFAULT_MOVE_HISTORY_LIMIT = 50;
+
+export async function getProductMoveHistory(
+  client: OdooClient,
+  productId: number,
+  dateFrom?: string,
+  dateTo?: string,
+  limit = DEFAULT_MOVE_HISTORY_LIMIT
+): Promise<StockMoveHistoryEntry[]> {
+  const domain: unknown[] = [
+    ["product_id", "=", productId],
+    ["state", "=", "done"],
+  ];
+  if (dateFrom) domain.push(["date", ">=", `${dateFrom} 00:00:00`]);
+  if (dateTo) domain.push(["date", "<=", `${dateTo} 23:59:59`]);
+
+  const rows = await client.searchRead(
+    "stock.move.line",
+    domain,
+    ["id", "date", "quantity", "location_id", "location_dest_id", "picking_id"],
+    { limit, order: "date desc" }
+  );
+
+  const pickingIds = [...new Set(rows.filter((row) => row.picking_id).map((row) => row.picking_id[0]))];
+  const pickingTypeIdByPickingId = new Map<number, number>();
+  if (pickingIds.length > 0) {
+    const pickingRows = await client.searchRead(
+      "stock.picking",
+      [["id", "in", pickingIds]],
+      ["id", "picking_type_id"]
+    );
+    for (const row of pickingRows) {
+      pickingTypeIdByPickingId.set(row.id, row.picking_type_id[0]);
+    }
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    date: row.date || null,
+    quantity: row.quantity,
+    sourceLocationName: row.location_id[1],
+    destLocationName: row.location_dest_id[1],
+    pickingId: row.picking_id ? row.picking_id[0] : null,
+    pickingTypeId: row.picking_id ? pickingTypeIdByPickingId.get(row.picking_id[0]) ?? null : null,
+    pickingName: row.picking_id ? row.picking_id[1] : null,
   }));
 }
 

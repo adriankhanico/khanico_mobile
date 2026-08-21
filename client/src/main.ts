@@ -4,6 +4,7 @@ import { icon } from "./lib/icons";
 import { mountDashboard } from "./pages/dashboard";
 import { mountInventorySearch } from "./pages/inventory-search";
 import { mountLogin } from "./pages/login";
+import { mountProductHistory } from "./pages/product-history";
 import { mountSaleOrderRoute } from "./pages/sale-order";
 import { mountPickingRoute } from "./pages/scan-picking";
 
@@ -35,6 +36,7 @@ const routes: { prefix: string; route: Route }[] = [
   { prefix: "inventory", route: { mount: (root) => mountInventorySearch(root) } },
   { prefix: "sale-order", route: { mount: mountSaleOrderRoute } },
   { prefix: "picking", route: { mount: mountPickingRoute } },
+  { prefix: "product-history", route: { mount: mountProductHistory } },
 ];
 
 function currentSegments(): string[] {

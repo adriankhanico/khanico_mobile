@@ -74,6 +74,7 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
         <div><span class="muted">Total on hand</span> ${detail.qtyAvailable}</div>
       </div>
       ${detail.description ? `<p>${escapeHtml(detail.description)}</p>` : ""}
+      <button type="button" id="view-history-btn" class="link-btn">View move history</button>
       <h4>On hand by location</h4>
       <div class="modal-locations">
         ${
@@ -102,6 +103,11 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
     `;
 
     body.querySelector<HTMLButtonElement>(".modal-close")!.addEventListener("click", close);
+
+    body.querySelector<HTMLButtonElement>("#view-history-btn")!.addEventListener("click", () => {
+      close();
+      window.location.hash = `/product-history/${productId}/${encodeURIComponent(detail.name)}`;
+    });
 
     body.querySelectorAll<HTMLButtonElement>("[data-move-toggle-location-id]").forEach((btn) => {
       btn.addEventListener("click", () => {

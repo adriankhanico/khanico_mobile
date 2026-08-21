@@ -142,6 +142,17 @@ export interface LocationOption {
   barcode: string | null;
 }
 
+export interface StockMoveHistoryEntry {
+  id: number;
+  date: string | null;
+  quantity: number;
+  sourceLocationName: string;
+  destLocationName: string;
+  pickingId: number | null;
+  pickingTypeId: number | null;
+  pickingName: string | null;
+}
+
 export interface MoveStockRequest {
   sourceLocationId: number;
   destLocationId: number;

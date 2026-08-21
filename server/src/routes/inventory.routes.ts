@@ -4,6 +4,7 @@ import { createOdooClientForUser } from "../odoo/client.js";
 import {
   getProductDetail,
   getProductLocations,
+  getProductMoveHistory,
   InvalidMoveError,
   moveStock,
   searchLocations,
@@ -47,6 +48,22 @@ inventoryRouter.get("/:productId/detail", async (req, res, next) => {
       return res.status(404).json({ error: "not_found", message: "Product not found" });
     }
     res.json(req.odooIsAdmin ? detail : redactProductPrices(detail));
+  } catch (err) {
+    next(err);
+  }
+});
+
+inventoryRouter.get("/:productId/history", async (req, res, next) => {
+  try {
+    const client = createOdooClientForUser(req.odoo!);
+    const productId = Number(req.params.productId);
+    if (!Number.isInteger(productId)) {
+      return res.status(400).json({ error: "bad_request", message: "productId must be an integer" });
+    }
+    const dateFrom = typeof req.query.from === "string" ? req.query.from : undefined;
+    const dateTo = typeof req.query.to === "string" ? req.query.to : undefined;
+    const history = await getProductMoveHistory(client, productId, dateFrom, dateTo);
+    res.json(history);
   } catch (err) {
     next(err);
   }
