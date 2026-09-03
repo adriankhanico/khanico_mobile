@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { MoveStockRequest } from "@khanico/shared";
 import { createOdooClientForUser } from "../odoo/client.js";
 import {
+  DuplicateBarcodeError,
   getProductDetail,
   getProductLocations,
   getProductMoveHistory,
@@ -9,6 +10,7 @@ import {
   moveStock,
   searchLocations,
   searchProducts,
+  updateProductBarcode,
 } from "../odoo/inventory.js";
 import { redactProductPrices } from "../lib/redact-prices.js";
 
@@ -78,6 +80,34 @@ inventoryRouter.get("/:productId/locations", async (req, res, next) => {
     }
     const locations = await getProductLocations(client, productId);
     res.json(locations);
+  } catch (err) {
+    next(err);
+  }
+});
+
+inventoryRouter.put("/:productId/barcode", async (req, res, next) => {
+  try {
+    const client = createOdooClientForUser(req.odoo!);
+    const productId = Number(req.params.productId);
+    const { barcode } = req.body as { barcode?: string };
+    if (!Number.isInteger(productId) || typeof barcode !== "string") {
+      return res.status(400).json({
+        error: "bad_request",
+        message: "productId must be an integer and barcode must be a string",
+      });
+    }
+    try {
+      await updateProductBarcode(client, productId, barcode);
+    } catch (err) {
+      if (err instanceof DuplicateBarcodeError) {
+        return res.status(409).json({ error: "duplicate_barcode", message: err.message });
+      }
+      if (err instanceof InvalidMoveError) {
+        return res.status(400).json({ error: "invalid_barcode", message: err.message });
+      }
+      throw err;
+    }
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

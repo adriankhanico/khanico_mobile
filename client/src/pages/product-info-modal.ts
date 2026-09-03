@@ -1,5 +1,5 @@
 import type { LocationOption, ProductDetail } from "@khanico/shared";
-import { apiErrorMessage, apiGet, apiPost, isAdmin } from "../lib/api-client";
+import { apiErrorMessage, apiGet, apiPost, apiPut, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 
@@ -23,6 +23,7 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
 
   function close() {
     destHidScanner?.detach();
+    barcodeHidScanner?.detach();
     overlay.remove();
   }
 
@@ -47,7 +48,9 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
   }
 
   let openMoveLocationId: number | null = null;
+  let editingBarcode = false;
   let destHidScanner: HidScanner | null = null;
+  let barcodeHidScanner: HidScanner | null = null;
 
   async function refreshDetail() {
     detail = await apiGet<ProductDetail>(`/inventory/${productId}/detail`);
@@ -57,13 +60,18 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
   function render() {
     destHidScanner?.detach();
     destHidScanner = null;
+    barcodeHidScanner?.detach();
+    barcodeHidScanner = null;
 
     body.innerHTML = `
       <button type="button" class="modal-close" aria-label="Close">${icon("x")}</button>
       <h3>${escapeHtml(detail.name)}</h3>
       <div class="modal-meta">
         <div><span class="muted">SKU</span> ${escapeHtml(detail.defaultCode ?? "—")}</div>
-        <div><span class="muted">Barcode</span> ${escapeHtml(detail.barcode ?? "—")}</div>
+        <div>
+          <span class="muted">Barcode</span> ${escapeHtml(detail.barcode ?? "—")}
+          ${editingBarcode ? "" : `<button type="button" class="link-btn barcode-edit-btn" id="edit-barcode-btn">Edit</button>`}
+        </div>
         <div><span class="muted">SL</span> ${escapeHtml(detail.sl ?? "—")}</div>
         ${
           isAdmin()
@@ -73,6 +81,23 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
         }
         <div><span class="muted">Total on hand</span> ${detail.qtyAvailable}</div>
       </div>
+      ${
+        editingBarcode
+          ? `
+            <div class="move-form" id="barcode-edit-form">
+              <label>Barcode</label>
+              <input type="text" id="barcode-input" autocomplete="off" value="${escapeHtml(
+                detail.barcode ?? ""
+              )}" data-scan-target="true" />
+              <div id="barcode-status"></div>
+              <div class="backorder-actions">
+                <button type="button" class="btn-primary" id="save-barcode-btn">Save</button>
+                <button type="button" class="btn-secondary" id="cancel-barcode-btn">Cancel</button>
+              </div>
+            </div>
+          `
+          : ""
+      }
       ${detail.description ? `<p>${escapeHtml(detail.description)}</p>` : ""}
       <button type="button" id="view-history-btn" class="link-btn">View move history</button>
       <h4>On hand by location</h4>
@@ -119,6 +144,18 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
 
     if (openMoveLocationId !== null) {
       bindMoveForm(openMoveLocationId);
+    }
+
+    const editBarcodeBtn = body.querySelector<HTMLButtonElement>("#edit-barcode-btn");
+    if (editBarcodeBtn) {
+      editBarcodeBtn.addEventListener("click", () => {
+        editingBarcode = true;
+        render();
+      });
+    }
+
+    if (editingBarcode) {
+      bindBarcodeForm();
     }
   }
 
@@ -241,6 +278,56 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
         submitBtn.disabled = false;
       }
     });
+  }
+
+  function bindBarcodeForm() {
+    const form = body.querySelector<HTMLDivElement>("#barcode-edit-form");
+    if (!form) return;
+
+    const input = form.querySelector<HTMLInputElement>("#barcode-input")!;
+    const statusEl = form.querySelector<HTMLDivElement>("#barcode-status")!;
+    const saveBtn = form.querySelector<HTMLButtonElement>("#save-barcode-btn")!;
+    const cancelBtn = form.querySelector<HTMLButtonElement>("#cancel-barcode-btn")!;
+
+    input.focus();
+    input.select();
+
+    async function save(value: string) {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        statusEl.innerHTML = `<span class="error">Barcode cannot be empty.</span>`;
+        return;
+      }
+      saveBtn.disabled = true;
+      statusEl.textContent = "Saving…";
+      try {
+        await apiPut(`/inventory/${productId}/barcode`, { barcode: trimmed });
+        editingBarcode = false;
+        await refreshDetail();
+      } catch (err) {
+        statusEl.innerHTML = `<span class="error">${escapeHtml(
+          apiErrorMessage(err, "Failed to save barcode.")
+        )}</span>`;
+        saveBtn.disabled = false;
+      }
+    }
+
+    saveBtn.addEventListener("click", () => save(input.value));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") save(input.value);
+    });
+    cancelBtn.addEventListener("click", () => {
+      editingBarcode = false;
+      render();
+    });
+
+    barcodeHidScanner = new HidScanner({
+      onScan: (code) => {
+        input.value = code;
+        save(code);
+      },
+    });
+    barcodeHidScanner.attach();
   }
 
   render();

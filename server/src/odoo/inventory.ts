@@ -299,3 +299,28 @@ export async function moveStock(client: OdooClient, productId: number, move: Mov
     throw new Error("Transfer could not be completed automatically — check it in Odoo");
   }
 }
+
+export class DuplicateBarcodeError extends Error {}
+
+export async function updateProductBarcode(
+  client: OdooClient,
+  productId: number,
+  barcode: string
+): Promise<void> {
+  const trimmed = barcode.trim();
+  if (!trimmed) {
+    throw new InvalidMoveError("Barcode cannot be empty");
+  }
+
+  const existing = await client.searchRead(
+    "product.product",
+    [["barcode", "=", trimmed], ["id", "!=", productId]],
+    ["id", "name"],
+    { limit: 1 }
+  );
+  if (existing.length > 0) {
+    throw new DuplicateBarcodeError(`This barcode is already used by "${existing[0].name}"`);
+  }
+
+  await client.executeKw("product.product", "write", [[productId], { barcode: trimmed }]);
+}

@@ -7,6 +7,19 @@ export class OfflineError extends Error {
   }
 }
 
+/** An HTTP error response from the API, carrying the server's own message when it sent one. */
+export class ApiError extends Error {
+  status: number;
+  /** True when `message` came from the server's own { message } body, not a generic fallback. */
+  hasServerMessage: boolean;
+  constructor(status: number, message: string, hasServerMessage: boolean) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.hasServerMessage = hasServerMessage;
+  }
+}
+
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
@@ -22,11 +35,27 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
 
   if (res.status === 401 && !path.startsWith("/auth/")) {
     window.location.hash = "/login";
-    throw new Error(`${init.method ?? "GET"} ${path} failed: 401`);
+    throw new ApiError(401, `${init.method ?? "GET"} ${path} failed: 401`, false);
   }
   if (!res.ok) {
     const method = init.method ?? "GET";
-    throw new Error(`${method} ${path} failed: ${res.status}`);
+    // Deliberate 4xx validation errors (bad input, conflicts) carry a { message } worth
+    // showing the user as-is. 5xx and anything else fall back to each screen's own generic
+    // message instead of surfacing raw internal/Odoo error text.
+    let message = `${method} ${path} failed: ${res.status}`;
+    let hasServerMessage = false;
+    if (res.status >= 400 && res.status < 500) {
+      try {
+        const body = await res.json();
+        if (body && typeof body.message === "string") {
+          message = body.message;
+          hasServerMessage = true;
+        }
+      } catch {
+        // body wasn't JSON — keep the generic message
+      }
+    }
+    throw new ApiError(res.status, message, hasServerMessage);
   }
   return res.json();
 }
@@ -55,9 +84,14 @@ export function apiDelete<T>(path: string): Promise<T> {
   return request<T>(path, { method: "DELETE" });
 }
 
-/** Returns a user-facing message for a caught API error, distinguishing offline from other failures. */
+/**
+ * Returns a user-facing message for a caught API error: the offline message when there's no
+ * connectivity, the server's own explanation when it sent one (e.g. a validation error), or the
+ * caller-supplied fallback otherwise.
+ */
 export function apiErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof OfflineError) return err.message;
+  if (err instanceof ApiError && err.hasServerMessage) return err.message;
   return fallback;
 }
 
