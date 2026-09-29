@@ -17,16 +17,17 @@ For a **code change** (anything in `client/`, `server/`, or `shared/`):
 1. On your own machine: commit and push the change to `main` on GitHub as normal.
 2. SSH into the server and redeploy:
    ```bash
-   ssh adrian@10.6.0.77
-   cd /opt/khanico-mobile
-   git pull
-   docker compose up -d --build
+   ssh adrian@10.6.0.77 /opt/khanico-mobile/deploy.sh
    ```
-3. Verify:
-   ```bash
-   curl http://localhost:3001/api/health
-   ```
-   should print `{"status":"ok"}`.
+   This pulls, rebuilds, and waits for the health check, then prints the
+   deployed commit.
+
+**Never edit code directly on the server** — it isn't in git, so it's missing
+from every other machine and gets lost on the next deploy. `deploy.sh` guards
+against this: if the checkout has local edits it refuses to deploy, saves them
+to `~/khanico-uncommitted-<timestamp>.patch`, and lists them. Get that patch
+into git from your own machine (`git apply` it, commit, push), then on the
+server run `git checkout -- .` and deploy again.
 
 For an **env-only change** (e.g. switching which Odoo instance it points at —
 edit `server/.env` on the server directly, it's gitignored and never touches
