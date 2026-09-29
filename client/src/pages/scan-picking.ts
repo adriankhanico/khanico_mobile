@@ -54,6 +54,12 @@ function renderPickingRow(p: Picking): string {
     </div>`;
 }
 
+/** Pack-step transfers (WH/PACK/…) show the move's "Description of Picking" on each line. */
+function renderPickingDescription(picking: Picking, line: PickingLine): string {
+  if (!picking.name.startsWith("WH/PACK") || !line.pickingDescription) return "";
+  return `<div class="line-picking-description">${escapeHtml(line.pickingDescription)}</div>`;
+}
+
 async function loadCategoryList(root: HTMLElement) {
   root.innerHTML = `<section class="page"><p class="muted">Loading transfer types…</p></section>`;
 
@@ -340,6 +346,7 @@ async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
                         ? `<div class="line-description">${escapeHtml(line.productDescription)}</div>`
                         : ""
                     }
+                    ${renderPickingDescription(picking, line)}
                     <div class="muted line-sl">SL ${escapeHtml(line.productSl ?? "—")}</div>
                     <div class="muted line-locations">${escapeHtml(line.locationName)} → ${escapeHtml(
           line.locationDestName
@@ -448,6 +455,7 @@ async function mountPickingDetail(root: HTMLElement, picking: Picking) {
                     ? `<div class="line-description">${escapeHtml(line.productDescription)}</div>`
                     : ""
                 }
+                ${renderPickingDescription(picking, line)}
                 <div class="muted line-sl">SL ${escapeHtml(line.productSl ?? "—")}</div>
                 <div class="muted line-locations">${escapeHtml(line.locationName)} → ${escapeHtml(
           line.locationDestName

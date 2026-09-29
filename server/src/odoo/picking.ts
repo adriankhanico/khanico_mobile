@@ -215,10 +215,16 @@ export async function getPickingLines(client: OdooClient, pickingId: number): Pr
 
   const moveIds = [...new Set(rows.map((row) => row.move_id[0]))];
   const demandByMoveId = new Map<number, number>();
+  const pickingDescriptionByMoveId = new Map<number, string | null>();
   if (moveIds.length > 0) {
-    const moveRows = await client.searchRead("stock.move", [["id", "in", moveIds]], ["id", "product_uom_qty"]);
+    const moveRows = await client.searchRead(
+      "stock.move",
+      [["id", "in", moveIds]],
+      ["id", "product_uom_qty", "description_picking"]
+    );
     for (const row of moveRows) {
       demandByMoveId.set(row.id, row.product_uom_qty);
+      pickingDescriptionByMoveId.set(row.id, row.description_picking || null);
     }
   }
 
@@ -242,6 +248,7 @@ export async function getPickingLines(client: OdooClient, pickingId: number): Pr
     productDescription: row.x_studio_desc_on_order || null,
     productBarcode: null,
     productSl: slByProductId.get(row.product_id[0]) ?? null,
+    pickingDescription: pickingDescriptionByMoveId.get(row.move_id[0]) ?? null,
     requestedQty: demandByMoveId.get(row.move_id[0]) ?? row.quantity,
     quantity: row.quantity,
     picked: row.picked,

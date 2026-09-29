@@ -893,6 +893,14 @@ a.result-row {
   line-height: 1.45;
 }
 
+.line-picking-description {
+  font-size: 0.85rem;
+  color: var(--ink);
+  margin-top: 0.25rem;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
 .line-locations {
   font-size: 0.78rem;
   margin-top: 0.3rem;

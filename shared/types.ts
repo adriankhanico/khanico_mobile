@@ -28,6 +28,8 @@ export interface PickingLine {
   productDescription: string | null;
   productBarcode: string | null;
   productSl: string | null;
+  /** stock.move.description_picking — the free-text "Description of Picking" on the move. */
+  pickingDescription: string | null;
   requestedQty: number;
   quantity: number;
   picked: boolean;
