@@ -558,7 +558,7 @@ a.result-row {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.6rem;
   margin: 1rem 0 1.5rem;
 }
@@ -1264,4 +1264,38 @@ a.result-row {
 #login-error {
   min-height: 1.2rem;
   margin-top: 0.5rem;
+}
+
+/* ---------- stock counts ---------- */
+.count-line {
+  background: var(--card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(14, 57, 214, 0.05);
+}
+
+.count-line-done {
+  border-color: var(--green-border);
+}
+
+.count-line-open {
+  border-color: var(--blue);
+  cursor: default;
+}
+
+.count-line .stamp .icon {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
+
+.count-form {
+  margin-top: 0.6rem;
+}
+
+.count-form-hint {
+  margin: 0;
+  font-size: 0.75rem;
 }

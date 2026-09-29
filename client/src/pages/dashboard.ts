@@ -67,6 +67,10 @@ export async function mountDashboard(root: HTMLElement) {
           <span class="quick-action-icon">${icon("package")}</span>
           <span>Transfers</span>
         </a>
+        <a href="#/counts" class="quick-action-tile">
+          <span class="quick-action-icon">${icon("clipboard-list")}</span>
+          <span>Stock Counts</span>
+        </a>
       </div>
 
       <h4>Today's tasks</h4>
@@ -94,9 +98,20 @@ export async function mountDashboard(root: HTMLElement) {
     return;
   }
 
+  const countsTile =
+    summary.myCountsToDo > 0
+      ? `
+        <a href="#/counts" class="task-tile">
+          <span class="task-tile-icon">${icon("clipboard-list")}</span>
+          <span class="task-tile-count">${formatCount(summary.myCountsToDo)}</span>
+          <span class="task-tile-label">Stock counts</span>
+        </a>`
+      : "";
+
   taskTilesEl.innerHTML =
-    summary.pendingByCategory.length > 0
-      ? summary.pendingByCategory
+    summary.pendingByCategory.length > 0 || countsTile
+      ? countsTile +
+        summary.pendingByCategory
           .map(
             (c) => `
               <a href="#/picking/${c.pickingTypeId}" class="task-tile">
@@ -106,7 +121,7 @@ export async function mountDashboard(root: HTMLElement) {
               </a>`
           )
           .join("")
-      : `<p class="muted">No pending transfers.</p>`;
+      : `<p class="muted">No pending transfers or counts.</p>`;
 
   orderCountsEl.innerHTML = `
     <a href="#/sale-order" class="result-row category-row">

@@ -74,6 +74,8 @@ export interface DashboardCategoryCount {
 
 export interface DashboardSummary {
   pendingByCategory: DashboardCategoryCount[];
+  /** Stock count lines assigned to the current user that haven't been counted yet. */
+  myCountsToDo: number;
   draftOrderCount: number;
   recentOrders: SaleOrderSummary[];
 }
@@ -161,6 +163,39 @@ export interface MoveStockRequest {
   sourceLocationId: number;
   destLocationId: number;
   quantity: number;
+}
+
+/**
+ * One line of an Odoo Physical Inventory count (a stock.quant) assigned to the current user.
+ * The system's expected quantity is deliberately left out: counts are blind.
+ */
+export interface CountLine {
+  quantId: number;
+  locationId: number;
+  locationName: string;
+  productId: number;
+  productName: string;
+  productCode: string | null;
+  productBarcode: string | null;
+  productSl: string | null;
+  lotName: string | null;
+  /** Odoo's scheduled count date (YYYY-MM-DD). */
+  scheduledDate: string | null;
+  /** The quantity entered so far, or null if this line hasn't been counted yet. */
+  countedQty: number | null;
+}
+
+export interface CountLocation {
+  location: LocationOption;
+  lines: CountLine[];
+}
+
+export interface SetCountRequest {
+  locationId: number;
+  productId: number;
+  /** The existing count line being counted; omit to count a product that isn't on the list. */
+  quantId?: number;
+  countedQty: number;
 }
 
 export interface ScanRequest {

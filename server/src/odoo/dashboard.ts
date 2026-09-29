@@ -1,5 +1,6 @@
 import type { DashboardSummary } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
+import { countMyCountsToDo } from "./counts.js";
 import { listOpenPickingsGrouped } from "./picking.js";
 import { countDraftSaleOrders, searchSaleOrders } from "./sales.js";
 
@@ -13,8 +14,9 @@ import { countDraftSaleOrders, searchSaleOrders } from "./sales.js";
 const PRIORITY_SEQUENCE_CODES = ["OUT", "PICK", "RET", "INT"];
 
 export async function getDashboardSummary(client: OdooClient): Promise<DashboardSummary> {
-  const [groups, draftOrderCount, recentOrders] = await Promise.all([
+  const [groups, myCountsToDo, draftOrderCount, recentOrders] = await Promise.all([
     listOpenPickingsGrouped(client),
+    countMyCountsToDo(client),
     countDraftSaleOrders(client),
     searchSaleOrders(client, "", 5),
   ]);
@@ -49,6 +51,7 @@ export async function getDashboardSummary(client: OdooClient): Promise<Dashboard
 
   return {
     pendingByCategory: categories,
+    myCountsToDo,
     draftOrderCount,
     recentOrders,
   };

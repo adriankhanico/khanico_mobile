@@ -1,6 +1,7 @@
 import "./styles/app.css";
 import { apiGet, apiPost, setCurrentUserIsAdmin, setCurrentUserName } from "./lib/api-client";
 import { icon } from "./lib/icons";
+import { mountCountsRoute } from "./pages/counts";
 import { mountDashboard } from "./pages/dashboard";
 import { mountInventorySearch } from "./pages/inventory-search";
 import { mountLogin } from "./pages/login";
@@ -37,6 +38,7 @@ const routes: { prefix: string; route: Route }[] = [
   { prefix: "sale-order", route: { mount: mountSaleOrderRoute } },
   { prefix: "picking", route: { mount: mountPickingRoute } },
   { prefix: "product-history", route: { mount: mountProductHistory } },
+  { prefix: "counts", route: { mount: mountCountsRoute } },
 ];
 
 function currentSegments(): string[] {

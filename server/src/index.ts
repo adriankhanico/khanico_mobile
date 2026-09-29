@@ -7,6 +7,7 @@ import { config } from "./config.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requireOdooAuth } from "./middleware/require-odoo-auth.js";
 import { authRouter } from "./routes/auth.routes.js";
+import { countsRouter } from "./routes/counts.routes.js";
 import { dashboardRouter } from "./routes/dashboard.routes.js";
 import { healthRouter, publicHealthRouter } from "./routes/health.routes.js";
 import { inventoryRouter } from "./routes/inventory.routes.js";
@@ -57,6 +58,7 @@ app.use(requireOdooAuth);
 app.use("/api/health", healthRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/inventory", inventoryRouter);
+app.use("/api/counts", countsRouter);
 app.use("/api/pickings", pickingRouter);
 app.use("/api", salesRouter);
 
