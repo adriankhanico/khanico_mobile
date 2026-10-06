@@ -98,12 +98,26 @@ input {
   margin: 0 auto;
 }
 
-.app-home-btn {
+.app-menu-btn {
   flex-shrink: 0;
-  font-size: 1.2rem;
-  line-height: 1;
-  text-decoration: none;
+  width: 2.6rem;
+  height: 2.2rem;
+  margin-left: -0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-input);
   color: var(--blue);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.app-wordmark-link {
+  display: block;
+  margin: 0 auto;
 }
 
 .app-wordmark {
@@ -127,20 +141,151 @@ input {
   width: 2.6rem;
 }
 
-.current-user {
-  display: none;
+/* ---------- app menu (drawer) ---------- */
+
+.app-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--modal-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s;
 }
 
-.logout-btn,
-.theme-toggle-btn {
+.app-menu-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.app-menu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 95;
+  width: min(84vw, 300px);
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 24px rgba(6, 32, 112, 0.18);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0.22s;
+}
+
+.app-menu.open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.app-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0.75rem 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-menu-wordmark {
+  height: 1.3rem;
+  width: auto;
+}
+
+.app-menu-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
+  border-radius: var(--radius-input);
   color: var(--ink-soft);
-  font-size: 1.05rem;
-  line-height: 1;
+  font-size: 1.2rem;
   cursor: pointer;
+}
+
+.app-menu-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.app-menu-section-title {
+  margin: 0.9rem 0.6rem 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.app-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.9rem;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  border-radius: var(--radius-input);
+  background: none;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.app-menu-item:hover {
+  background: var(--bg);
+}
+
+.app-menu-item.active {
+  background: var(--stamp-bg);
+  color: var(--blue);
+}
+
+.app-menu-item-icon {
   flex-shrink: 0;
-  padding: 0;
+  display: inline-flex;
+  font-size: 1.15rem;
+  color: var(--blue);
+}
+
+.app-menu-item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-menu-foot {
+  padding: 0.5rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+
+.app-menu-foot .app-menu-item-icon {
+  color: var(--ink-soft);
+}
+
+.app-menu-user {
+  padding: 0.5rem 0.7rem 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.app-menu-user strong {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-menu,
+  .app-menu-overlay {
+    transition: none;
+  }
 }
 
 /* ---------- bottom nav ---------- */

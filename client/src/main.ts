@@ -1,5 +1,6 @@
 import "./styles/app.css";
 import { apiGet, apiPost, setCurrentUserIsAdmin, setCurrentUserName } from "./lib/api-client";
+import { mountAppMenu } from "./lib/app-menu";
 import { icon } from "./lib/icons";
 import { mountCountsRoute } from "./pages/counts";
 import { mountDashboard } from "./pages/dashboard";
@@ -14,19 +15,37 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 
 const THEME_STORAGE_KEY = "khanico-theme";
 
+function currentTheme(): "light" | "dark" {
+  return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+}
+
 function applyTheme(theme: "light" | "dark") {
   document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
-  const toggle = document.querySelector<HTMLButtonElement>("#theme-toggle-btn");
-  if (toggle) {
-    toggle.innerHTML = icon(theme === "dark" ? "sun" : "moon");
-    toggle.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // storage unavailable — the theme just won't be remembered
   }
 }
 
 function initTheme() {
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    // storage unavailable — fall back to light
+  }
   applyTheme(stored === "dark" ? "dark" : "light");
+}
+
+async function logout() {
+  try {
+    await apiPost("/auth/logout", {});
+  } catch {
+    // ignore — redirect regardless
+  }
+  window.location.hash = "/login";
+  window.location.reload();
 }
 
 interface Route {
@@ -77,32 +96,21 @@ function mountHeader() {
   header.className = "app-header";
   header.innerHTML = `
     <div class="app-header-top">
-      <a href="#/dashboard" class="app-home-btn" aria-label="Home">${icon("home")}</a>
-      <img class="app-wordmark" src="/images/khanico-logo-blue.png" alt="Khanico" />
-      <div class="app-header-right">
-        <span id="current-user" class="current-user"></span>
-        <button id="theme-toggle-btn" type="button" class="theme-toggle-btn" aria-label="Switch to dark mode">${icon("moon")}</button>
-        <button id="logout-btn" type="button" class="logout-btn" aria-label="Log out">${icon("log-out")}</button>
-      </div>
+      <button id="menu-btn" type="button" class="app-menu-btn" aria-label="Open menu">${icon("menu")}</button>
+      <a href="#/dashboard" class="app-wordmark-link" aria-label="Home">
+        <img class="app-wordmark" src="/images/khanico-logo-blue.png" alt="Khanico" />
+      </a>
+      <div class="app-header-right" aria-hidden="true"></div>
     </div>
   `;
   document.body.prepend(header);
 
-  header.querySelector<HTMLButtonElement>("#logout-btn")!.addEventListener("click", async () => {
-    try {
-      await apiPost("/auth/logout", {});
-    } catch {
-      // ignore — redirect regardless
-    }
-    window.location.hash = "/login";
-    window.location.reload();
-  });
-
-  header.querySelector<HTMLButtonElement>("#theme-toggle-btn")!.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    applyTheme(current === "dark" ? "light" : "dark");
-  });
   initTheme();
+  mountAppMenu(header.querySelector<HTMLButtonElement>("#menu-btn")!, {
+    getTheme: currentTheme,
+    toggleTheme: () => applyTheme(currentTheme() === "dark" ? "light" : "dark"),
+    logout,
+  });
 }
 
 function mountBottomNav() {
@@ -145,8 +153,6 @@ async function boot() {
     const me = await apiGet<{ uid: number; login: string; name: string; isAdmin: boolean }>("/auth/me");
     setCurrentUserIsAdmin(me.isAdmin);
     setCurrentUserName(me.name);
-    const userEl = document.querySelector<HTMLSpanElement>("#current-user");
-    if (userEl) userEl.textContent = me.name;
     if (onLoginRoute) {
       window.location.hash = "/dashboard";
     }
