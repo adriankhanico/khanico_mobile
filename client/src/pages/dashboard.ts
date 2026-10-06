@@ -1,7 +1,7 @@
 import type { DashboardSummary } from "@khanico/shared";
 import { apiGet, getCurrentUserName, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
-import { iconForPickingType } from "../lib/picking-type-icon";
+import { transferTileBody } from "../lib/transfer-tile";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -76,6 +76,9 @@ export async function mountDashboard(root: HTMLElement) {
       <h4>Today's tasks</h4>
       <div id="dashboard-task-tiles" class="task-tiles"></div>
 
+      <h4>Inventory</h4>
+      <div id="dashboard-inventory" class="results"></div>
+
       <h4>Sale orders</h4>
       <div id="dashboard-order-counts" class="results"></div>
 
@@ -90,11 +93,13 @@ export async function mountDashboard(root: HTMLElement) {
   const taskTilesEl = root.querySelector<HTMLDivElement>("#dashboard-task-tiles")!;
   const orderCountsEl = root.querySelector<HTMLDivElement>("#dashboard-order-counts")!;
   const recentOrdersEl = root.querySelector<HTMLDivElement>("#dashboard-recent-orders")!;
+  const inventoryEl = root.querySelector<HTMLDivElement>("#dashboard-inventory")!;
 
   if (!summary) {
     taskTilesEl.innerHTML = `<p class="error">Failed to load pending transfers.</p>`;
     orderCountsEl.innerHTML = "";
     recentOrdersEl.innerHTML = "";
+    inventoryEl.innerHTML = "";
     return;
   }
 
@@ -114,14 +119,17 @@ export async function mountDashboard(root: HTMLElement) {
         summary.pendingByCategory
           .map(
             (c) => `
-              <a href="#/picking/${c.pickingTypeId}" class="task-tile">
-                <span class="task-tile-icon">${iconForPickingType(c.pickingTypeName)}</span>
-                <span class="task-tile-count">${formatCount(c.count)}</span>
-                <span class="task-tile-label">${escapeHtml(c.pickingTypeName)}</span>
-              </a>`
+              <a href="#/picking/${c.pickingTypeId}" class="task-tile">${transferTileBody(c)}</a>`
           )
           .join("")
       : `<p class="muted">No pending transfers or counts.</p>`;
+
+  inventoryEl.innerHTML = `
+    <a href="#/barcodes" class="result-row category-row">
+      <strong>Missing barcodes</strong>
+      <span class="badge ${summary.missingBarcodeCount === 0 ? "badge-zero" : ""}">${formatCount(summary.missingBarcodeCount)}</span>
+    </a>
+  `;
 
   orderCountsEl.innerHTML = `
     <a href="#/sale-order" class="result-row category-row">

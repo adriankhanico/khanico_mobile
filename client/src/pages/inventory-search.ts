@@ -4,6 +4,7 @@ import { createCameraScanner, type CameraScanner } from "../lib/scanner/camera-s
 import { HidScanner } from "../lib/scanner/hid-scanner";
 import { icon } from "../lib/icons";
 import { openProductInfoModal } from "./product-info-modal";
+import { partNumberHtml } from "../lib/part-number";
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -22,7 +23,7 @@ function renderResults(container: HTMLElement, products: Product[]) {
             <span class="stamp">${p.qtyAvailable}</span>
           </div>
           <div class="product-meta">
-            <span>${escapeHtml(p.defaultCode ?? "—")}</span>
+            ${partNumberHtml(p.defaultCode)}
             <span>SL ${escapeHtml(p.sl ?? "—")}</span>
           </div>
           ${

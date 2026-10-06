@@ -67,7 +67,7 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
       <button type="button" class="modal-close" aria-label="Close">${icon("x")}</button>
       <h3>${escapeHtml(detail.name)}</h3>
       <div class="modal-meta">
-        <div><span class="muted">SKU</span> ${escapeHtml(detail.defaultCode ?? "—")}</div>
+        <div><span class="muted">Part #</span> <strong class="part-number-value">${escapeHtml(detail.defaultCode ?? "—")}</strong></div>
         <div>
           <span class="muted">Barcode</span> ${escapeHtml(detail.barcode ?? "—")}
           ${editingBarcode ? "" : `<button type="button" class="link-btn barcode-edit-btn" id="edit-barcode-btn">Edit</button>`}

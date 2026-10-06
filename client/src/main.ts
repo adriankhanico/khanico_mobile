@@ -5,6 +5,7 @@ import { mountCountsRoute } from "./pages/counts";
 import { mountDashboard } from "./pages/dashboard";
 import { mountInventorySearch } from "./pages/inventory-search";
 import { mountLogin } from "./pages/login";
+import { mountMissingBarcodesRoute } from "./pages/missing-barcodes";
 import { mountProductHistory } from "./pages/product-history";
 import { mountSaleOrderRoute } from "./pages/sale-order";
 import { mountPickingRoute } from "./pages/scan-picking";
@@ -39,6 +40,7 @@ const routes: { prefix: string; route: Route }[] = [
   { prefix: "picking", route: { mount: mountPickingRoute } },
   { prefix: "product-history", route: { mount: mountProductHistory } },
   { prefix: "counts", route: { mount: mountCountsRoute } },
+  { prefix: "barcodes", route: { mount: mountMissingBarcodesRoute } },
 ];
 
 function currentSegments(): string[] {

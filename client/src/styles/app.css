@@ -434,6 +434,18 @@ input[type="password"]::placeholder {
   color: var(--red);
 }
 
+.completed-banner.waiting {
+  background: var(--amber-bg);
+}
+
+.completed-banner.waiting .completed-icon {
+  background: var(--amber-ink);
+}
+
+.completed-banner.waiting .completed-title {
+  color: var(--amber-ink);
+}
+
 .link-btn {
   background: none;
   border: none;
@@ -515,10 +527,54 @@ a.result-row {
 .product-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem 0.9rem;
   font-size: 0.8rem;
   color: var(--ink-soft);
   margin-top: 0.3rem;
+}
+
+/* Part number (Odoo internal reference): the code staff read off the shelf label. */
+.part-number {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  background: var(--stamp-bg);
+  color: var(--ink);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.part-number-label {
+  font-family: var(--font);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.part-number-missing {
+  background: none;
+  padding-left: 0;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.line-part-number {
+  margin: 0.2rem 0;
+}
+
+.part-number-value {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
 }
 
 .product-price-row {
@@ -668,9 +724,40 @@ a.result-row {
 }
 
 .task-tile-label {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.task-tile-count-unit {
+  margin-left: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--green);
+}
+
+.task-tile-count-zero {
   color: var(--ink-soft);
+}
+
+.task-tile-count-zero .task-tile-count-unit {
+  color: var(--ink-soft);
+}
+
+.task-tile-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--amber-ink);
+}
+
+.task-tile-late {
+  color: var(--red);
 }
 
 .dashboard-recent-head {
@@ -711,6 +798,18 @@ a.result-row {
 .state-pill.state-cancel {
   background: var(--red-bg);
   color: var(--red);
+}
+
+.state-pill.state-assigned,
+.state-pill.state-done {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.state-pill.state-confirmed,
+.state-pill.state-waiting {
+  background: var(--amber-bg);
+  color: var(--amber-ink);
 }
 
 .state-pill.direction-incoming {
@@ -1291,6 +1390,153 @@ a.result-row {
 .count-line-open {
   border-color: var(--blue);
   cursor: default;
+}
+
+/* ---------- missing barcodes ---------- */
+.barcode-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.barcode-controls label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.barcode-controls.hidden {
+  display: none;
+}
+
+.barcode-controls select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: var(--font);
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.barcode-locations {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.barcode-remaining {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: -0.3rem 0 0.8rem;
+}
+
+.barcode-remaining-count {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--blue);
+  line-height: 1;
+}
+
+.barcode-remaining-label {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.barcode-remaining-tick {
+  animation: barcode-tick 0.5s ease-out;
+}
+
+@keyframes barcode-tick {
+  0% { transform: scale(1.35); color: var(--green); }
+  100% { transform: scale(1); }
+}
+
+.barcode-saved,
+.barcode-brand-done {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 0.7rem;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+}
+
+.barcode-saved strong,
+.barcode-brand-done strong {
+  color: var(--green);
+}
+
+.barcode-saved-icon,
+.barcode-done-check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--card);
+}
+
+.barcode-saved-icon .icon,
+.barcode-done-check .icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.barcode-saved-code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.barcode-saved-left {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.barcode-saved-flash {
+  animation: barcode-flash 0.6s ease-out;
+}
+
+@keyframes barcode-flash {
+  0% { transform: scale(0.97); box-shadow: 0 0 0 4px var(--green-border); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+}
+
+.barcode-done-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.barcode-done-row .barcode-done-check {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.barcode-done-row .barcode-done-check .icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barcode-remaining-tick,
+  .barcode-saved-flash {
+    animation: none;
+  }
 }
 
 .count-line .stamp .icon {

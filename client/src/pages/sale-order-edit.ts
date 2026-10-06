@@ -2,6 +2,7 @@ import type { Product, SaleOrderDetail } from "@khanico/shared";
 import { apiDelete, apiErrorMessage, apiGet, apiPost, apiPut, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
 import { HidScanner } from "../lib/scanner/hid-scanner";
+import { partNumberHtml, splitProductDisplayName } from "../lib/part-number";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -190,7 +191,7 @@ export async function mountSaleOrderEdit(root: HTMLElement, orderId: number) {
                   <div class="result-row" data-product-id="${p.id}" data-product-name="${escapeHtml(p.name)}">
                     <div>${escapeHtml(p.name)}</div>
                     <div class="product-meta">
-                      <span>${escapeHtml(p.defaultCode ?? "—")}</span>
+                      ${partNumberHtml(p.defaultCode)}
                       <span>SL ${escapeHtml(p.sl ?? "—")}</span>
                       <span>Qty ${p.qtyAvailable}</span>
                     </div>
@@ -264,7 +265,11 @@ export async function mountSaleOrderEdit(root: HTMLElement, orderId: number) {
           <div class="order-line-card">
             <div class="order-line-head">
               <div>
-                <div class="product-name">${escapeHtml(line.productName)}</div>
+                <div class="product-name">${escapeHtml(splitProductDisplayName(line.productName).name)}</div>
+                ${(() => {
+                  const { code } = splitProductDisplayName(line.productName);
+                  return code ? `<div class="line-part-number">${partNumberHtml(code)}</div>` : "";
+                })()}
                 <div class="product-meta">SL ${escapeHtml(line.sl ?? "—")}</div>
                 ${
                   line.description && line.description !== line.productName

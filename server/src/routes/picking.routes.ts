@@ -5,6 +5,7 @@ import {
   confirmMoveLine,
   findMoveLineByBarcode,
   getPicking,
+  getPickingDemandLines,
   getPickingLines,
   getPickingTypeSettings,
   listOpenPickings,
@@ -71,6 +72,19 @@ pickingRouter.get("/:id/lines", async (req, res, next) => {
     }
     const lines = await getPickingLines(client, pickingId);
     res.json(lines);
+  } catch (err) {
+    next(err);
+  }
+});
+
+pickingRouter.get("/:id/demand", async (req, res, next) => {
+  try {
+    const client = createOdooClientForUser(req.odoo!);
+    const pickingId = Number(req.params.id);
+    if (!Number.isInteger(pickingId)) {
+      return res.status(400).json({ error: "bad_request", message: "id must be an integer" });
+    }
+    res.json(await getPickingDemandLines(client, pickingId));
   } catch (err) {
     next(err);
   }

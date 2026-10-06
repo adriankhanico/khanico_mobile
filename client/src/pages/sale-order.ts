@@ -3,6 +3,7 @@ import { apiErrorMessage, apiGet, apiPost, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 import { mountSaleOrderEdit } from "./sale-order-edit";
+import { partNumberHtml, splitProductDisplayName } from "../lib/part-number";
 
 interface DraftLine extends SaleOrderLineInput {
   productName: string;
@@ -177,7 +178,11 @@ function mountSaleOrderForm(root: HTMLElement) {
           (line, i) => `
             <div class="order-line-card">
               <div class="order-line-head">
-                <div class="product-name">${escapeHtml(line.productName)}</div>
+                <div class="product-name">${escapeHtml(splitProductDisplayName(line.productName).name)}</div>
+                ${(() => {
+                  const { code } = splitProductDisplayName(line.productName);
+                  return code ? `<div class="line-part-number">${partNumberHtml(code)}</div>` : "";
+                })()}
                 <button data-remove-line="${i}" type="button">${icon("x")}</button>
               </div>
               <div class="order-line-fields">
@@ -277,7 +282,7 @@ function mountSaleOrderForm(root: HTMLElement) {
               <div class="result-row" data-product-id="${p.id}">
                 <div>${escapeHtml(p.name)}</div>
                 <div class="product-meta">
-                  <span>${escapeHtml(p.defaultCode ?? "—")}</span>
+                  ${partNumberHtml(p.defaultCode)}
                   <span>SL ${escapeHtml(p.sl ?? "—")}</span>
                   <span>Qty ${p.qtyAvailable}</span>
                 </div>
@@ -295,7 +300,9 @@ function mountSaleOrderForm(root: HTMLElement) {
     if (existing) {
       existing.quantity += 1;
     } else {
-      lines.push({ productId: product.id, productName: product.name, quantity: 1, priceUnit: product.priceWithVat });
+      // Match Odoo's "[CODE] Name" display name so the part number shows before the order is saved.
+      const productName = product.defaultCode ? `[${product.defaultCode}] ${product.name}` : product.name;
+      lines.push({ productId: product.id, productName, quantity: 1, priceUnit: product.priceWithVat });
     }
     productResults.innerHTML = "";
     productSearch.value = "";

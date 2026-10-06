@@ -3,6 +3,7 @@ import { apiErrorMessage, apiGet, apiPost } from "../lib/api-client";
 import { createCameraScanner, type CameraScanner } from "../lib/scanner/camera-scanner";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 import { icon } from "../lib/icons";
+import { partNumberHtml } from "../lib/part-number";
 
 /** Same gap HidScanner uses to tell a hardware scan burst from human typing. */
 const SCAN_BURST_GAP_MS = 80;
@@ -283,7 +284,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
           ${stateHtml}
         </div>
         <div class="product-meta">
-          <span>${escapeHtml(item.productCode ?? "—")}</span>
+          ${partNumberHtml(item.productCode)}
           <span>SL ${escapeHtml(item.productSl ?? "—")}</span>
         </div>
         ${extraHtml}
@@ -502,7 +503,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
                     <div class="result-row" data-search-product-id="${p.id}">
                       <strong>${escapeHtml(p.name)}</strong>
                       <div class="product-meta">
-                        <span>${escapeHtml(p.defaultCode ?? "—")}</span>
+                        ${partNumberHtml(p.defaultCode)}
                         <span>SL ${escapeHtml(p.sl ?? "—")}</span>
                       </div>
                     </div>`

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { MoveStockRequest } from "@khanico/shared";
+import { listProductsMissingBarcode } from "../odoo/barcodes.js";
 import { createOdooClientForUser } from "../odoo/client.js";
 import {
   DuplicateBarcodeError,
@@ -22,6 +23,15 @@ inventoryRouter.get("/locations/search", async (req, res, next) => {
     const query = String(req.query.q ?? "");
     const locations = await searchLocations(client, query);
     res.json(locations);
+  } catch (err) {
+    next(err);
+  }
+});
+
+inventoryRouter.get("/missing-barcodes", async (req, res, next) => {
+  try {
+    const client = createOdooClientForUser(req.odoo!);
+    res.json(await listProductsMissingBarcode(client));
   } catch (err) {
     next(err);
   }

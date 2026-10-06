@@ -10,8 +10,15 @@ import { apiErrorMessage, apiGet, apiPost } from "../lib/api-client";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 import { createCameraScanner, type CameraScanner } from "../lib/scanner/camera-scanner";
 import { icon } from "../lib/icons";
-import { iconForPickingType } from "../lib/picking-type-icon";
+import { transferTileBody } from "../lib/transfer-tile";
 import { openProductInfoModal } from "./product-info-modal";
+import { partNumberHtml, splitProductDisplayName } from "../lib/part-number";
+
+/** Part number chip for a line, when Odoo's display name carries one. */
+function lineCodeHtml(displayName: string): string {
+  const { code } = splitProductDisplayName(displayName);
+  return code ? `<div class="line-part-number">${partNumberHtml(code)}</div>` : "";
+}
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -44,7 +51,7 @@ function renderPickingRow(p: Picking): string {
     <div class="result-row" data-picking-id="${p.id}">
       <div class="product-card-top">
         <strong>${escapeHtml(p.name)}</strong>
-        <span class="state-pill state-${escapeHtml(p.state)}">${escapeHtml(p.state)}</span>
+        <span class="state-pill state-${escapeHtml(p.state)}">${escapeHtml(STATE_LABELS[p.state] ?? p.state)}</span>
       </div>
       <div class="product-meta">
         <span>${escapeHtml(p.origin ?? "—")}</span>
@@ -54,10 +61,19 @@ function renderPickingRow(p: Picking): string {
     </div>`;
 }
 
-/** Pack-step transfers (WH/PACK/…) show the move's "Description of Picking" on each line. */
+/**
+ * Shows the move's "Description of Picking" on pack-step transfers (WH/PACK/…), and on lines that
+ * came from a purchase order, where it carries the PO line's description — styled like the sale
+ * order description (x_studio_desc_on_order). Skipped when it only repeats the product name.
+ */
 function renderPickingDescription(picking: Picking, line: PickingLine): string {
-  if (!picking.name.startsWith("WH/PACK") || !line.pickingDescription) return "";
-  return `<div class="line-picking-description">${escapeHtml(line.pickingDescription)}</div>`;
+  if (line.purchaseDescription) {
+    if (line.purchaseDescription.trim() === line.productDescription?.trim()) return "";
+    return `<div class="line-description line-picking-description">${escapeHtml(line.purchaseDescription)}</div>`;
+  }
+  const description = line.pickingDescription?.trim();
+  if (!description || !picking.name.startsWith("WH/PACK")) return "";
+  return `<div class="line-picking-description">${escapeHtml(description)}</div>`;
 }
 
 async function loadCategoryList(root: HTMLElement) {
@@ -94,11 +110,7 @@ async function loadCategoryList(root: HTMLElement) {
       groups
         .map(
           (g) => `
-            <div class="task-tile" data-picking-type-id="${g.pickingTypeId}">
-              <span class="task-tile-icon">${iconForPickingType(g.pickingTypeName)}</span>
-              <span class="task-tile-count">${g.pickings.length}</span>
-              <span class="task-tile-label">${escapeHtml(g.pickingTypeName)}</span>
-            </div>`
+            <div class="task-tile" data-picking-type-id="${g.pickingTypeId}">${transferTileBody(g)}</div>`
         )
         .join("") || `<p class="muted">No open transfers.</p>`;
 
@@ -145,10 +157,28 @@ async function loadCategoryList(root: HTMLElement) {
 }
 
 const STATUS_FILTERS: { value: PickingStatusFilter; label: string }[] = [
-  { value: "pending", label: "Pending" },
+  { value: "ready", label: "Ready" },
+  { value: "waiting", label: "Waiting" },
   { value: "done", label: "Done" },
   { value: "all", label: "All" },
 ];
+
+/** Odoo's own names for transfer states, as shown in its Inventory app. */
+const STATE_LABELS: Record<string, string> = {
+  draft: "Draft",
+  waiting: "Waiting Another Operation",
+  confirmed: "Waiting",
+  assigned: "Ready",
+  done: "Done",
+  cancel: "Cancelled",
+};
+
+/** Ready/Waiting tabs filter the open transfers already loaded with the group; Done/All are fetched. */
+function filterOpenPickings(pickings: Picking[], status: PickingStatusFilter): Picking[] {
+  if (status === "ready") return pickings.filter((p) => p.state === "assigned");
+  if (status === "waiting") return pickings.filter((p) => p.state !== "assigned");
+  return pickings;
+}
 
 async function loadPickingListByTypeId(root: HTMLElement, pickingTypeId: number) {
   root.innerHTML = `<section class="page"><p class="muted">Loading…</p></section>`;
@@ -176,10 +206,12 @@ function loadPickingList(root: HTMLElement, group: PickingTypeGroup) {
       <button id="back-to-categories" type="button" class="link-btn">← Back to transfer types</button>
       <h2>${escapeHtml(group.pickingTypeName)}</h2>
       <div class="status-filter-row">
-        ${STATUS_FILTERS.map(
-          (f) =>
-            `<button type="button" class="status-filter-btn ${f.value === "pending" ? "active" : ""}" data-status="${f.value}">${f.label}</button>`
-        ).join("")}
+        ${STATUS_FILTERS.map((f) => {
+          const count = f.value === "ready" ? group.readyCount : f.value === "waiting" ? group.waitingCount : null;
+          return `<button type="button" class="status-filter-btn ${f.value === "ready" ? "active" : ""}" data-status="${
+            f.value
+          }">${f.label}${count !== null ? ` (${count})` : ""}</button>`;
+        }).join("")}
       </div>
       <input
         id="group-search-input"
@@ -195,8 +227,8 @@ function loadPickingList(root: HTMLElement, group: PickingTypeGroup) {
   const resultsEl = root.querySelector<HTMLDivElement>("#group-results")!;
   const filterButtons = root.querySelectorAll<HTMLButtonElement>("[data-status]");
 
-  let currentPickings: Picking[] = group.pickings;
-  let currentStatus: PickingStatusFilter = "pending";
+  let currentPickings: Picking[] = filterOpenPickings(group.pickings, "ready");
+  let currentStatus: PickingStatusFilter = "ready";
 
   function renderInto(pickings: Picking[]) {
     resultsEl.innerHTML =
@@ -239,8 +271,8 @@ function loadPickingList(root: HTMLElement, group: PickingTypeGroup) {
       currentStatus = status;
       filterButtons.forEach((b) => b.classList.toggle("active", b === btn));
 
-      if (status === "pending") {
-        currentPickings = group.pickings;
+      if (status === "ready" || status === "waiting") {
+        currentPickings = filterOpenPickings(group.pickings, status);
         applySearch();
         return;
       }
@@ -303,17 +335,52 @@ async function loadPickingDetailById(root: HTMLElement, pickingTypeId: number, p
   mountPickingDetail(root, picking);
 }
 
+/** States where Odoo hasn't reserved stock yet, so the transfer has no move lines to scan against. */
+const NOT_READY_STATES = ["draft", "waiting", "confirmed"];
+
+function renderStatusBanner(picking: Picking): string {
+  if (NOT_READY_STATES.includes(picking.state)) {
+    const detail =
+      picking.state === "waiting"
+        ? "Waiting on another operation to finish first."
+        : picking.state === "draft"
+          ? "This transfer is still a draft."
+          : "Waiting for stock to be reserved.";
+    return `
+      <div class="completed-banner waiting">
+        <div class="completed-icon">${icon("clock")}</div>
+        <div>
+          <div class="completed-title">Not ready yet</div>
+          <div class="completed-detail">${detail} You can see what's coming, but it can't be picked until it's Ready.</div>
+        </div>
+      </div>`;
+  }
+  const isCancelled = picking.state === "cancel";
+  return `
+    <div class="completed-banner ${isCancelled ? "cancelled" : ""}">
+      <div class="completed-icon">${isCancelled ? icon("x") : icon("check")}</div>
+      <div>
+        <div class="completed-title">${isCancelled ? "Transfer cancelled" : "Validated"}</div>
+        ${!isCancelled ? `<div class="completed-detail">${escapeHtml(formatDateTime(picking.dateDone))}</div>` : ""}
+      </div>
+    </div>`;
+}
+
+/**
+ * Read-only view: done/cancelled transfers (their move lines), and transfers that aren't Ready
+ * yet (their demand, since Odoo hasn't created move lines for them).
+ */
 async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
   root.innerHTML = `<section class="page"><p class="muted">Loading…</p></section>`;
 
+  const notReady = NOT_READY_STATES.includes(picking.state);
   let lines: PickingLine[] = [];
+  let loadFailed = false;
   try {
-    lines = await apiGet<PickingLine[]>(`/pickings/${picking.id}/lines`);
+    lines = await apiGet<PickingLine[]>(`/pickings/${picking.id}/${notReady ? "demand" : "lines"}`);
   } catch {
-    lines = [];
+    loadFailed = true;
   }
-
-  const isCancelled = picking.state === "cancel";
 
   root.innerHTML = `
     <section class="page">
@@ -321,26 +388,19 @@ async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
       <h2>${escapeHtml(picking.name)}</h2>
       <p class="muted">${escapeHtml(picking.origin ?? "—")} · ${escapeHtml(picking.partnerName ?? "—")}</p>
 
-      <div class="completed-banner ${isCancelled ? "cancelled" : ""}">
-        <div class="completed-icon">${isCancelled ? icon("x") : icon("check")}</div>
-        <div>
-          <div class="completed-title">${isCancelled ? "Transfer cancelled" : "Validated"}</div>
-          ${
-            !isCancelled
-              ? `<div class="completed-detail">${escapeHtml(formatDateTime(picking.dateDone))}</div>`
-              : ""
-          }
-        </div>
-      </div>
+      ${renderStatusBanner(picking)}
 
+      ${loadFailed ? `<p class="error">Failed to load this transfer's items.</p>` : ""}
+      ${!loadFailed && lines.length === 0 ? `<p class="muted">No items on this transfer.</p>` : ""}
       <div class="order-lines">
         ${lines
           .map(
             (line) => `
-              <div class="order-line-card picking-line-card picked">
+              <div class="order-line-card picking-line-card ${notReady ? "" : "picked"}">
                 <div class="picking-line-row">
                   <div>
-                    <span class="line-name" data-info-line-id="${line.id}">${escapeHtml(line.productName)}</span>
+                    <span class="line-name" data-info-line-id="${line.id}">${escapeHtml(splitProductDisplayName(line.productName).name)}</span>
+                    ${lineCodeHtml(line.productName)}
                     ${
                       line.productDescription && line.productDescription !== line.productName
                         ? `<div class="line-description">${escapeHtml(line.productDescription)}</div>`
@@ -352,7 +412,7 @@ async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
           line.locationDestName
         )}</div>
                   </div>
-                  <span class="stamp">${line.quantity}</span>
+                  <span class="stamp">${notReady ? line.requestedQty : line.quantity}</span>
                 </div>
               </div>`
           )
@@ -373,7 +433,7 @@ async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
 }
 
 async function mountPickingDetail(root: HTMLElement, picking: Picking) {
-  if (picking.state === "done" || picking.state === "cancel") {
+  if (picking.state === "done" || picking.state === "cancel" || NOT_READY_STATES.includes(picking.state)) {
     await mountReadOnlyPickingDetail(root, picking);
     return;
   }
@@ -449,7 +509,8 @@ async function mountPickingDetail(root: HTMLElement, picking: Picking) {
         }" data-line-id="${line.id}">
             <div class="picking-line-row">
               <div>
-                <span class="line-name" data-info-line-id="${line.id}">${escapeHtml(line.productName)}</span>
+                <span class="line-name" data-info-line-id="${line.id}">${escapeHtml(splitProductDisplayName(line.productName).name)}</span>
+                    ${lineCodeHtml(line.productName)}
                 ${
                   line.productDescription && line.productDescription !== line.productName
                     ? `<div class="line-description">${escapeHtml(line.productDescription)}</div>`

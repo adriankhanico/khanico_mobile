@@ -30,6 +30,12 @@ export interface PickingLine {
   productSl: string | null;
   /** stock.move.description_picking — the free-text "Description of Picking" on the move. */
   pickingDescription: string | null;
+  /**
+   * For goods that came in on a purchase order — the receipt itself or a later step such as
+   * Quarantine → Stock — the PO line's description, from the move chain. Null otherwise, or
+   * when it only repeats the product name.
+   */
+  purchaseDescription: string | null;
   requestedQty: number;
   quantity: number;
   picked: boolean;
@@ -52,7 +58,7 @@ export interface Picking {
   dateDone: string | null;
 }
 
-export type PickingStatusFilter = "pending" | "done" | "all";
+export type PickingStatusFilter = "pending" | "ready" | "waiting" | "done" | "all";
 
 export interface PickingTypeSettings {
   id: number;
@@ -65,19 +71,33 @@ export interface PickingTypeSettings {
 export interface PickingTypeGroup {
   pickingTypeId: number;
   pickingTypeName: string;
+  /** Every open transfer of this type (ready and waiting). */
   pickings: Picking[];
+  /** Ready to process (Odoo state "assigned") — what Odoo's overview calls "To Process". */
+  readyCount: number;
+  /** Not ready yet: waiting for stock or for another operation. */
+  waitingCount: number;
+  /** Open transfers whose scheduled date has passed. */
+  lateCount: number;
 }
 
 export interface DashboardCategoryCount {
   pickingTypeId: number;
   pickingTypeName: string;
-  count: number;
+  /** Ready to process (Odoo state "assigned") — what Odoo's overview calls "To Process". */
+  readyCount: number;
+  /** Not ready yet: waiting for stock or for another operation. */
+  waitingCount: number;
+  /** Open transfers whose scheduled date has passed. */
+  lateCount: number;
 }
 
 export interface DashboardSummary {
   pendingByCategory: DashboardCategoryCount[];
   /** Stock count lines assigned to the current user that haven't been counted yet. */
   myCountsToDo: number;
+  /** In-stock products with no barcode in Odoo. */
+  missingBarcodeCount: number;
   draftOrderCount: number;
   recentOrders: SaleOrderSummary[];
 }
@@ -198,6 +218,17 @@ export interface SetCountRequest {
   /** The existing count line being counted; omit to count a product that isn't on the list. */
   quantId?: number;
   countedQty: number;
+}
+
+/** An in-stock product with no barcode, as listed in the Missing Barcodes queue. */
+export interface MissingBarcodeProduct {
+  id: number;
+  name: string;
+  defaultCode: string | null;
+  sl: string | null;
+  brandId: number | null;
+  brandName: string | null;
+  locations: StockLocationQty[];
 }
 
 export interface ScanRequest {
