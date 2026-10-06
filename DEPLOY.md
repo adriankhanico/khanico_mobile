@@ -50,6 +50,32 @@ ssh adrian@10.6.0.77 "cd /opt/khanico-mobile && git log --oneline -1"   # on the
 If the commit hashes match and `git status --short` is empty on both sides,
 they're in sync.
 
+## HTTPS
+
+Browsers only let a site install as an app, run its service worker, or use the
+camera over HTTPS. A `caddy` container (see `Caddyfile`) serves the app at
+**`https://10.6.0.77`** with a certificate from Caddy's own internal certificate
+authority, since there's no domain. Plain `http://10.6.0.77:3001` keeps working
+during the move-over.
+
+Each device must trust that authority's root certificate **once**. Download it
+from **`http://10.6.0.77/khanico-ca.crt`** (plain HTTP on purpose — the HTTPS
+site can't be opened until the device trusts it), then:
+
+- **Zebra scanners**: add the certificate to the StageNow / MDM profile as a
+  trusted CA certificate, so new devices get it automatically.
+- **Android**: Settings → Security → Encryption & credentials → Install a
+  certificate → CA certificate → pick `khanico-ca.crt`.
+- **iPhone/iPad**: open the download in Safari, install the profile (Settings →
+  Profile Downloaded), then turn on full trust under Settings → General →
+  About → Certificate Trust Settings.
+- **Windows**: double-click the file → Install Certificate → Local Machine →
+  "Trusted Root Certification Authorities".
+
+The root lives in the `caddy_data` Docker volume and is valid for ~10 years; the
+site certificate under it renews itself. **Don't delete `caddy_data`** — a new
+root means re-trusting it on every device.
+
 ## First-time setup
 
 The steps below are only needed once, when standing the app up on a brand new

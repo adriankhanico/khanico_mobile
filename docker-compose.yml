@@ -4,8 +4,29 @@ services:
     container_name: khanico-mobile
     restart: unless-stopped
     ports:
+      # Plain HTTP, kept while devices move over to https://10.6.0.77 (via caddy below).
       - "3001:3001"
     env_file:
       - server/.env
     environment:
       - PORT=3001
+
+  # HTTPS for the app with a certificate from Caddy's own internal authority — see Caddyfile.
+  caddy:
+    image: caddy:2
+    container_name: khanico-mobile-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Holds the internal certificate authority; keep it, or every device must re-trust a new root.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - khanico-mobile
+
+volumes:
+  caddy_data:
+  caddy_config:

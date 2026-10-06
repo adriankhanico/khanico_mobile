@@ -1,0 +1,31 @@
+# HTTPS in front of the app on the local network, so browsers treat it as a secure
+# origin (needed to install the PWA, run its service worker, and use the camera).
+#
+# There's no domain, so Caddy acts as its own small certificate authority ("tls
+# internal") and issues a certificate for the server's IP. Each device has to trust
+# that authority's root certificate once — see DEPLOY.md, "HTTPS".
+{
+	# Clients connecting by IP send no SNI; serve the IP's certificate to them.
+	default_sni 10.6.0.77
+	# Caddy runs in a container, so it can't (and shouldn't) touch a host trust store.
+	skip_install_trust
+}
+
+https://10.6.0.77 {
+	tls internal
+	reverse_proxy khanico-mobile:3001
+}
+
+http://10.6.0.77 {
+	# The root certificate devices install to trust the HTTPS certificate. Served over
+	# plain HTTP because a device can't open the HTTPS site until it trusts this.
+	handle /khanico-ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		file_server
+	}
+	handle {
+		redir https://10.6.0.77{uri} permanent
+	}
+}
