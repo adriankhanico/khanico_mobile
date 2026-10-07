@@ -58,19 +58,11 @@ camera over HTTPS. A `caddy` container (see `Caddyfile`) serves the app at
 authority, since there's no domain. Plain `http://10.6.0.77:3001` keeps working
 during the move-over.
 
-Each device must trust that authority's root certificate **once**. Download it
-from **`http://10.6.0.77/khanico-ca.crt`** (plain HTTP on purpose — the HTTPS
-site can't be opened until the device trusts it), then:
-
-- **Zebra scanners**: add the certificate to the StageNow / MDM profile as a
-  trusted CA certificate, so new devices get it automatically.
-- **Android**: Settings → Security → Encryption & credentials → Install a
-  certificate → CA certificate → pick `khanico-ca.crt`.
-- **iPhone/iPad**: open the download in Safari, install the profile (Settings →
-  Profile Downloaded), then turn on full trust under Settings → General →
-  About → Certificate Trust Settings.
-- **Windows**: double-click the file → Install Certificate → Local Machine →
-  "Trusted Root Certification Authorities".
+Each device must trust that authority's root certificate **once**: download it
+from **`http://10.6.0.77/khanico-ca.crt`** and install it as a trusted root.
+Step-by-step instructions for Zebra, Android, iPhone, Windows and Firefox, plus
+troubleshooting, are in
+[docs/device-certificate-setup.md](docs/device-certificate-setup.md).
 
 The root lives in the `caddy_data` Docker volume and is valid for ~10 years; the
 site certificate under it renews itself. **Don't delete `caddy_data`** — a new

@@ -7,7 +7,7 @@ Custom warehouse/inventory mobile PWA integrating with Odoo 17/18, built to repl
 - `client/` — the PWA (Vite + TypeScript)
 - `server/` — Node/Express backend-for-frontend (BFF) that holds the Odoo API key and exposes a REST API to the client
 - `shared/` — TypeScript types shared between client and server
-- `docs/` — operational docs (e.g. Zebra DataWedge profile setup)
+- `docs/` — operational docs: Zebra DataWedge profile setup, and [trusting the HTTPS certificate on devices](docs/device-certificate-setup.md)
 
 ## Setup
 
