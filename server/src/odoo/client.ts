@@ -104,11 +104,17 @@ export function createOdooClientForUser(identity: OdooIdentity): OdooClient {
 
 /** Odoo's built-in "Settings / Administrator" group (base.group_system). */
 export async function isOdooAdmin(client: OdooClient): Promise<boolean> {
+  return userHasGroup(client, "base", "group_system");
+}
+
+/** Whether the logged-in user is in the group with this XML id (module.name); false if the group doesn't exist. */
+export async function userHasGroup(client: OdooClient, module: string, name: string): Promise<boolean> {
   const dataRows = await client.searchRead(
     "ir.model.data",
     [
-      ["module", "=", "base"],
-      ["name", "=", "group_system"],
+      ["module", "=", module],
+      ["name", "=", name],
+      ["model", "=", "res.groups"],
     ],
     ["res_id"]
   );

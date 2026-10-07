@@ -3,6 +3,12 @@ import type { MoveStockRequest } from "@khanico/shared";
 import { listProductsMissingBarcode } from "../odoo/barcodes.js";
 import { createOdooClientForUser } from "../odoo/client.js";
 import {
+  addAdditionalBarcode,
+  InvalidBarcodeError,
+  makeBarcodeMain,
+  removeAdditionalBarcode,
+} from "../odoo/multi-barcode.js";
+import {
   DuplicateBarcodeError,
   getProductDetail,
   getProductLocations,
@@ -122,6 +128,49 @@ inventoryRouter.put("/:productId/barcode", async (req, res, next) => {
     next(err);
   }
 });
+
+/** Runs an additional-barcode action, turning the app's own validation errors into a 400. */
+function additionalBarcodeRoute(action: (client: ReturnType<typeof createOdooClientForUser>, productId: number, barcodeId: number, body: any) => Promise<void>) {
+  return async (req: any, res: any, next: any) => {
+    try {
+      const client = createOdooClientForUser(req.odoo!);
+      const productId = Number(req.params.productId);
+      const barcodeId = req.params.barcodeId === undefined ? 0 : Number(req.params.barcodeId);
+      if (!Number.isInteger(productId) || !Number.isInteger(barcodeId)) {
+        return res.status(400).json({ error: "bad_request", message: "productId and barcodeId must be integers" });
+      }
+      try {
+        await action(client, productId, barcodeId, req.body ?? {});
+      } catch (err) {
+        if (err instanceof InvalidBarcodeError) {
+          return res.status(400).json({ error: "invalid_barcode", message: err.message });
+        }
+        throw err;
+      }
+      res.json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+inventoryRouter.post(
+  "/:productId/barcodes",
+  additionalBarcodeRoute((client, productId, _barcodeId, body: { barcode?: unknown; note?: unknown }) => {
+    if (typeof body.barcode !== "string") throw new InvalidBarcodeError("barcode must be a string");
+    return addAdditionalBarcode(client, productId, body.barcode, typeof body.note === "string" ? body.note : null);
+  })
+);
+
+inventoryRouter.delete(
+  "/:productId/barcodes/:barcodeId",
+  additionalBarcodeRoute((client, productId, barcodeId) => removeAdditionalBarcode(client, productId, barcodeId))
+);
+
+inventoryRouter.post(
+  "/:productId/barcodes/:barcodeId/make-main",
+  additionalBarcodeRoute((client, productId, barcodeId) => makeBarcodeMain(client, productId, barcodeId))
+);
 
 inventoryRouter.post("/:productId/move", async (req, res, next) => {
   try {

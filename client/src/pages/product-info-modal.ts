@@ -1,5 +1,5 @@
 import type { LocationOption, ProductDetail } from "@khanico/shared";
-import { apiErrorMessage, apiGet, apiPost, apiPut, isAdmin } from "../lib/api-client";
+import { apiDelete, apiErrorMessage, apiGet, apiPost, apiPut, isAdmin } from "../lib/api-client";
 import { icon } from "../lib/icons";
 import { HidScanner } from "../lib/scanner/hid-scanner";
 
@@ -49,6 +49,9 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
 
   let openMoveLocationId: number | null = null;
   let editingBarcode = false;
+  let addingExtraBarcode = false;
+  /** Result of the last additional-barcode action, shown above the list until the next render-changing action. */
+  let extraBarcodeStatus = "";
   let destHidScanner: HidScanner | null = null;
   let barcodeHidScanner: HidScanner | null = null;
 
@@ -70,7 +73,7 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
         <div><span class="muted">Part #</span> <strong class="part-number-value">${escapeHtml(detail.defaultCode ?? "—")}</strong></div>
         <div>
           <span class="muted">Barcode</span> ${escapeHtml(detail.barcode ?? "—")}
-          ${editingBarcode ? "" : `<button type="button" class="link-btn barcode-edit-btn" id="edit-barcode-btn">Edit</button>`}
+          ${editingBarcode || addingExtraBarcode ? "" : `<button type="button" class="link-btn barcode-edit-btn" id="edit-barcode-btn">Edit</button>`}
         </div>
         <div><span class="muted">SL</span> ${escapeHtml(detail.sl ?? "—")}</div>
         ${
@@ -98,6 +101,7 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
           `
           : ""
       }
+      ${renderExtraBarcodes()}
       ${detail.description ? `<p>${escapeHtml(detail.description)}</p>` : ""}
       <button type="button" id="view-history-btn" class="link-btn">View move history</button>
       <h4>On hand by location</h4>
@@ -150,12 +154,176 @@ export async function openProductInfoModal(productId: number, fallbackName: stri
     if (editBarcodeBtn) {
       editBarcodeBtn.addEventListener("click", () => {
         editingBarcode = true;
+        addingExtraBarcode = false;
         render();
       });
     }
 
     if (editingBarcode) {
       bindBarcodeForm();
+    }
+    bindExtraBarcodes();
+  }
+
+  /** Additional barcodes from the khanico_multi_barcode Odoo module; nothing when it isn't installed. */
+  function renderExtraBarcodes(): string {
+    const multi = detail.multiBarcode;
+    if (!multi) return "";
+    const rows = multi.barcodes
+      .map(
+        (b) => `
+          <div class="extra-barcode-row">
+            <div class="extra-barcode-text">
+              <span class="extra-barcode-code">${escapeHtml(b.barcode)}</span>
+              ${b.note ? `<span class="muted extra-barcode-note">${escapeHtml(b.note)}</span>` : ""}
+            </div>
+            <span class="extra-barcode-actions">
+              ${multi.canMakeMain ? `<button type="button" class="link-btn" data-make-main-id="${b.id}">Make main</button>` : ""}
+              ${multi.canRemove ? `<button type="button" class="link-btn link-btn-danger" data-remove-barcode-id="${b.id}">Remove</button>` : ""}
+            </span>
+          </div>`
+      )
+      .join("");
+    return `
+      <div class="extra-barcodes">
+        <div class="extra-barcodes-head">
+          <span class="muted">Additional barcodes</span>
+          ${
+            addingExtraBarcode || editingBarcode
+              ? ""
+              : `<button type="button" class="link-btn" id="add-extra-barcode-btn">${icon("plus")} Add</button>`
+          }
+        </div>
+        ${extraBarcodeStatus}
+        ${rows || `<p class="muted extra-barcodes-empty">None yet.</p>`}
+        ${
+          addingExtraBarcode
+            ? `
+              <div class="move-form" id="extra-barcode-form">
+                <label for="extra-barcode-input">New barcode</label>
+                <input type="text" id="extra-barcode-input" autocomplete="off" placeholder="Scan or type" data-scan-target="true" />
+                <label for="extra-barcode-note">Note (optional)</label>
+                <input type="text" id="extra-barcode-note" autocomplete="off" placeholder="e.g. Supplier: Parker" data-scan-target="true" />
+                <div id="extra-barcode-form-status"></div>
+                <div class="backorder-actions">
+                  <button type="button" class="btn-primary" id="save-extra-barcode-btn">Add barcode</button>
+                  <button type="button" class="btn-secondary" id="cancel-extra-barcode-btn">Cancel</button>
+                </div>
+              </div>`
+            : ""
+        }
+      </div>`;
+  }
+
+  function bindExtraBarcodes() {
+    const multi = detail.multiBarcode;
+    if (!multi) return;
+
+    body.querySelector<HTMLButtonElement>("#add-extra-barcode-btn")?.addEventListener("click", () => {
+      addingExtraBarcode = true;
+      extraBarcodeStatus = "";
+      render();
+    });
+
+    body.querySelectorAll<HTMLButtonElement>("[data-make-main-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const entry = multi.barcodes.find((b) => b.id === Number(btn.dataset.makeMainId));
+        if (!entry) return;
+        const keepNote = detail.barcode ? ` ${detail.barcode} will be kept as an additional barcode.` : "";
+        if (!window.confirm(`Make ${entry.barcode} the main barcode?${keepNote}`)) return;
+        await runExtraBarcodeAction(
+          btn,
+          () => apiPost(`/inventory/${productId}/barcodes/${entry.id}/make-main`, {}),
+          `${entry.barcode} is now the main barcode.`,
+          "Failed to change the main barcode."
+        );
+      });
+    });
+
+    body.querySelectorAll<HTMLButtonElement>("[data-remove-barcode-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const entry = multi.barcodes.find((b) => b.id === Number(btn.dataset.removeBarcodeId));
+        if (!entry) return;
+        if (!window.confirm(`Remove additional barcode ${entry.barcode}?`)) return;
+        await runExtraBarcodeAction(
+          btn,
+          () => apiDelete(`/inventory/${productId}/barcodes/${entry.id}`),
+          `Removed ${entry.barcode}.`,
+          "Failed to remove barcode."
+        );
+      });
+    });
+
+    const form = body.querySelector<HTMLDivElement>("#extra-barcode-form");
+    if (!form) return;
+    const input = form.querySelector<HTMLInputElement>("#extra-barcode-input")!;
+    const noteInput = form.querySelector<HTMLInputElement>("#extra-barcode-note")!;
+    const statusEl = form.querySelector<HTMLDivElement>("#extra-barcode-form-status")!;
+    const saveBtn = form.querySelector<HTMLButtonElement>("#save-extra-barcode-btn")!;
+    const cancelBtn = form.querySelector<HTMLButtonElement>("#cancel-extra-barcode-btn")!;
+
+    async function save() {
+      const barcode = input.value.trim();
+      if (!barcode) {
+        statusEl.innerHTML = `<span class="error">Scan or type a barcode first.</span>`;
+        return;
+      }
+      saveBtn.disabled = true;
+      statusEl.textContent = "Saving…";
+      try {
+        await apiPost(`/inventory/${productId}/barcodes`, { barcode, note: noteInput.value });
+        addingExtraBarcode = false;
+        extraBarcodeStatus = `<p class="success">Added ${escapeHtml(barcode)}.</p>`;
+        await refreshDetail();
+      } catch (err) {
+        statusEl.innerHTML = `<span class="error">${escapeHtml(apiErrorMessage(err, "Failed to add barcode."))}</span>`;
+        saveBtn.disabled = false;
+        input.select();
+      }
+    }
+
+    saveBtn.addEventListener("click", save);
+    input.addEventListener("keydown", (e) => {
+      // A scanner's Enter is consumed by the HID scanner below, which fills the field and moves on to the note.
+      if (e.key === "Enter" && !e.defaultPrevented) save();
+    });
+    noteInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") save();
+    });
+    cancelBtn.addEventListener("click", () => {
+      addingExtraBarcode = false;
+      render();
+    });
+
+    barcodeHidScanner = new HidScanner({
+      onScan: (code) => {
+        // A scan always fills the barcode field and saves (the note is optional). If the note field
+        // had focus, the scanner typed the code into it first — take that back out.
+        if (document.activeElement === noteInput && noteInput.value.endsWith(code)) {
+          noteInput.value = noteInput.value.slice(0, -code.length);
+        }
+        input.value = code;
+        save();
+      },
+    });
+    barcodeHidScanner.attach();
+    input.focus();
+  }
+
+  async function runExtraBarcodeAction(
+    btn: HTMLButtonElement,
+    action: () => Promise<unknown>,
+    success: string,
+    fallbackError: string
+  ) {
+    btn.disabled = true;
+    try {
+      await action();
+      extraBarcodeStatus = `<p class="success">${escapeHtml(success)}</p>`;
+      await refreshDetail();
+    } catch (err) {
+      extraBarcodeStatus = `<p class="error">${escapeHtml(apiErrorMessage(err, fallbackError))}</p>`;
+      render();
     }
   }
 

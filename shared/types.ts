@@ -3,6 +3,8 @@ export interface Product {
   name: string;
   defaultCode: string | null;
   barcode: string | null;
+  /** Every barcode that identifies this product: the main one first, then any additional ones. */
+  barcodes: string[];
   sl: string | null;
   listPrice: number;
   priceWithVat: number;
@@ -159,6 +161,24 @@ export interface SaleOrderCreateInput {
 export interface ProductDetail extends Product {
   description: string | null;
   locations: StockLocationQty[];
+  /** Additional barcodes (khanico_multi_barcode module); null when the module isn't installed. */
+  multiBarcode: MultiBarcodeInfo | null;
+}
+
+/** One additional barcode of a product (product.barcode). */
+export interface ProductBarcode {
+  id: number;
+  barcode: string;
+  /** Where it comes from, e.g. "Supplier: Parker". */
+  note: string | null;
+}
+
+export interface MultiBarcodeInfo {
+  barcodes: ProductBarcode[];
+  /** Only Odoo's "Barcode Remover" group may remove additional barcodes. */
+  canRemove: boolean;
+  /** Barcode Removers and Inventory users may swap an additional barcode with the main one. */
+  canMakeMain: boolean;
 }
 
 export interface LocationOption {
@@ -199,6 +219,8 @@ export interface CountLine {
   productName: string;
   productCode: string | null;
   productBarcode: string | null;
+  /** Main and additional barcodes, for matching scans. */
+  productBarcodes: string[];
   productSl: string | null;
   lotName: string | null;
   /** Odoo's scheduled count date (YYYY-MM-DD). */

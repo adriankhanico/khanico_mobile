@@ -320,7 +320,7 @@ function mountSaleOrderForm(root: HTMLElement) {
   async function handleProductScan(barcode: string) {
     try {
       const products = await apiGet<Product[]>(`/inventory/search?q=${encodeURIComponent(barcode)}`);
-      const match = products.find((p) => p.barcode === barcode) ?? products[0];
+      const match = products.find((p) => p.barcodes.includes(barcode)) ?? products[0];
       if (!match) {
         productScanStatus.innerHTML = `<span class="error">No product found for barcode ${escapeHtml(barcode)}</span>`;
         return;

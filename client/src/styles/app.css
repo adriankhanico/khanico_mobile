@@ -1698,3 +1698,74 @@ a.result-row {
   margin: 0;
   font-size: 0.75rem;
 }
+
+/* ---------- additional barcodes (product info) ---------- */
+.extra-barcodes {
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.extra-barcodes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.extra-barcodes-head .link-btn {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  gap: 0.25rem;
+}
+
+.extra-barcode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.extra-barcode-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.extra-barcode-code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.extra-barcode-note {
+  font-size: 0.78rem;
+}
+
+.extra-barcode-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.7rem;
+}
+
+.extra-barcode-actions .link-btn,
+.extra-barcodes .link-btn {
+  margin-bottom: 0;
+}
+
+.link-btn-danger {
+  color: var(--red);
+}
+
+.extra-barcodes-empty {
+  margin: 0.2rem 0;
+  font-size: 0.85rem;
+}

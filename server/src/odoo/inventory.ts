@@ -8,6 +8,7 @@ import type {
   StockMoveHistoryEntry,
 } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
+import { allBarcodes, getAdditionalBarcodes, getMultiBarcodeInfo } from "./multi-barcode.js";
 
 /** Resolves the warehouse's "Internal Transfers" operation type (Odoo sequence_code "INT"). */
 async function getInternalTransferPickingTypeId(client: OdooClient): Promise<number> {
@@ -62,12 +63,13 @@ async function computeVatRates(client: OdooClient, rows: any[]): Promise<Map<num
   return rateByProductId;
 }
 
-function toProduct(raw: any, vatRate: number): Product {
+function toProduct(raw: any, vatRate: number, barcodes: string[]): Product {
   return {
     id: raw.id,
     name: raw.name,
     defaultCode: raw.default_code || null,
     barcode: raw.barcode || null,
+    barcodes,
     sl: raw.x_studio_sl || null,
     listPrice: raw.list_price,
     priceWithVat: raw.list_price * (1 + vatRate),
@@ -89,9 +91,15 @@ export async function searchProducts(client: OdooClient, query: string, limit = 
     ["name", "ilike", trimmed],
   ];
 
+  // With khanico_multi_barcode installed, the barcode leaf also matches additional barcodes.
   const rows = await client.searchRead("product.product", domain, PRODUCT_FIELDS, { limit });
-  const vatRates = await computeVatRates(client, rows);
-  return rows.map((row) => toProduct(row, vatRates.get(row.id) ?? 0));
+  const [vatRates, extraBarcodes] = await Promise.all([
+    computeVatRates(client, rows),
+    getAdditionalBarcodes(client, rows.map((row) => row.id)),
+  ]);
+  return rows.map((row) =>
+    toProduct(row, vatRates.get(row.id) ?? 0, allBarcodes(row.barcode || null, extraBarcodes.get(row.id)))
+  );
 }
 
 export async function getProductDetail(
@@ -105,12 +113,16 @@ export async function getProductDetail(
   );
   if (rows.length === 0) return null;
 
-  const vatRates = await computeVatRates(client, rows);
-  const locations = await getProductLocations(client, productId);
+  const [vatRates, locations, multiBarcode] = await Promise.all([
+    computeVatRates(client, rows),
+    getProductLocations(client, productId),
+    getMultiBarcodeInfo(client, productId),
+  ]);
   return {
-    ...toProduct(rows[0], vatRates.get(rows[0].id) ?? 0),
+    ...toProduct(rows[0], vatRates.get(rows[0].id) ?? 0, allBarcodes(rows[0].barcode || null, multiBarcode?.barcodes)),
     description: rows[0].description_sale || null,
     locations,
+    multiBarcode,
   };
 }
 

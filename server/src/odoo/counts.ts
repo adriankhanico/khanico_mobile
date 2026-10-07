@@ -1,5 +1,6 @@
 import type { CountLine, CountLocation, SetCountRequest } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
+import { allBarcodes, getAdditionalBarcodes } from "./multi-barcode.js";
 
 /**
  * Counts follow Odoo's own Physical Inventory flow: a manager assigns quants to a
@@ -28,6 +29,7 @@ export class InvalidCountError extends Error {}
 async function toCountLines(client: OdooClient, quants: any[]): Promise<CountLine[]> {
   const productIds = [...new Set(quants.map((q) => q.product_id[0]))];
   const productById = new Map<number, any>();
+  const extraBarcodes = await getAdditionalBarcodes(client, productIds);
   if (productIds.length > 0) {
     const products = await client.searchRead(
       "product.product",
@@ -49,6 +51,7 @@ async function toCountLines(client: OdooClient, quants: any[]): Promise<CountLin
       productName: q.product_id[1],
       productCode: product?.default_code || null,
       productBarcode: product?.barcode || null,
+      productBarcodes: allBarcodes(product?.barcode || null, extraBarcodes.get(q.product_id[0])),
       productSl: product?.x_studio_sl || null,
       lotName: q.lot_id ? q.lot_id[1] : null,
       scheduledDate: q.inventory_date || null,

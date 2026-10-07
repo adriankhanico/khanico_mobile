@@ -1,5 +1,6 @@
 import type { MissingBarcodeProduct } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
+import { hasMultiBarcode } from "./multi-barcode.js";
 
 /**
  * Storable products with no barcode that have stock in an internal location — the ones
@@ -22,14 +23,19 @@ const MISSING_BARCODE_DOMAIN = [
 /** Brand comes from the product_brand module (product.template.product_brand_id). */
 const BRAND_FIELD = "product_brand_id";
 
+/** A product with an additional barcode (khanico_multi_barcode) isn't missing one. */
+async function missingBarcodeDomain(client: OdooClient): Promise<unknown[]> {
+  return (await hasMultiBarcode(client)) ? [...MISSING_BARCODE_DOMAIN, ["barcode_ids", "=", false]] : MISSING_BARCODE_DOMAIN;
+}
+
 export async function countProductsMissingBarcode(client: OdooClient): Promise<number> {
-  return client.searchCount("product.product", MISSING_BARCODE_DOMAIN);
+  return client.searchCount("product.product", await missingBarcodeDomain(client));
 }
 
 export async function listProductsMissingBarcode(client: OdooClient): Promise<MissingBarcodeProduct[]> {
   const products = await client.searchRead(
     "product.product",
-    MISSING_BARCODE_DOMAIN,
+    await missingBarcodeDomain(client),
     ["id", "name", "default_code", "x_studio_sl", BRAND_FIELD],
     { order: "name, id" }
   );

@@ -187,7 +187,7 @@ interface OpenCount {
   productId: number;
   productName: string;
   productCode: string | null;
-  productBarcode: string | null;
+  productBarcodes: string[];
   productSl: string | null;
   initialQty: string;
 }
@@ -385,7 +385,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
       productId: line.productId,
       productName: line.productName,
       productCode: line.productCode,
-      productBarcode: line.productBarcode,
+      productBarcodes: line.productBarcodes,
       productSl: line.productSl,
       initialQty: fromScan ? "1" : line.countedQty !== null ? formatQty(line.countedQty) : "",
     };
@@ -410,7 +410,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
       productId: product.id,
       productName: product.name,
       productCode: product.defaultCode,
-      productBarcode: product.barcode,
+      productBarcodes: product.barcodes,
       productSl: product.sl,
       initialQty: fromScan ? "1" : "",
     };
@@ -419,7 +419,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
   }
 
   async function resolveCode(code: string) {
-    const matches = lines.filter((line) => matchesCode(code, line.productBarcode, line.productCode, line.productSl));
+    const matches = lines.filter((line) => matchesCode(code, ...line.productBarcodes, line.productCode, line.productSl));
     if (matches.length === 1) {
       scanStatusEl.innerHTML = "";
       openLine(matches[0], true);
@@ -442,7 +442,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
         if (location.id !== locationId) window.location.hash = `/counts/${location.id}`;
         return;
       }
-      const product = products.find((p) => matchesCode(code, p.barcode, p.defaultCode, p.sl));
+      const product = products.find((p) => matchesCode(code, ...p.barcodes, p.defaultCode, p.sl));
       if (product) {
         openProduct(product, true);
         return;
@@ -459,7 +459,7 @@ async function mountCountLocation(root: HTMLElement, locationId: number) {
       scanInput.value = "";
       // The scanner typed the barcode into the quantity field before its Enter arrived; undo that.
       if (document.activeElement === qtyInput) qtyInput.value = qtyBeforeBurst;
-      if (matchesCode(code, open.productBarcode, open.productCode, open.productSl)) {
+      if (matchesCode(code, ...open.productBarcodes, open.productCode, open.productSl)) {
         qtyInput.value = formatQty((parseQty(qtyInput.value) ?? 0) + 1);
         qtyBeforeBurst = qtyInput.value;
         setStatus("");

@@ -22,6 +22,17 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     return;
   }
 
+  // ValidationError / UserError text is written by Odoo (or a module) for end users,
+  // e.g. "Barcode X is already the main barcode of Y" — pass it through as a 400.
+  const odooName = (err as OdooError | undefined)?.odooErrorName;
+  if (err instanceof Error && (odooName === "odoo.exceptions.ValidationError" || odooName === "odoo.exceptions.UserError")) {
+    res.status(400).json({
+      error: "odoo_validation",
+      message: err.message.replace(/^Odoo JSON-RPC error: /, ""),
+    });
+    return;
+  }
+
   const message = err instanceof Error ? err.message : "Internal server error";
   res.status(500).json({ error: "internal_error", message });
 }
