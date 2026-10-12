@@ -1769,3 +1769,10 @@ a.result-row {
   margin: 0.2rem 0;
   font-size: 0.85rem;
 }
+
+.picking-header-meta {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 12px;
+  font-size: 0.9rem;
+}

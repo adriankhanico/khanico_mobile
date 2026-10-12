@@ -46,6 +46,17 @@ function pickingDisplayDate(p: Picking): string | null {
   return p.dateDone ?? p.scheduledDate;
 }
 
+/** Transfer detail header: source document, partner, date, and source → destination location. */
+function renderPickingHeaderMeta(picking: Picking): string {
+  const dateLabel = picking.dateDone ? "Done" : "Scheduled";
+  return `
+      <div class="picking-header-meta muted">
+        <div>Source: ${escapeHtml(picking.origin ?? "—")} · ${escapeHtml(picking.partnerName ?? "—")}</div>
+        <div>${dateLabel}: ${escapeHtml(formatDateTime(pickingDisplayDate(picking)))}</div>
+        <div>${escapeHtml(picking.locationName ?? "—")} → ${escapeHtml(picking.locationDestName ?? "—")}</div>
+      </div>`;
+}
+
 function renderPickingRow(p: Picking): string {
   return `
     <div class="result-row" data-picking-id="${p.id}">
@@ -386,7 +397,7 @@ async function mountReadOnlyPickingDetail(root: HTMLElement, picking: Picking) {
     <section class="page">
       <button id="back-to-list" type="button" class="link-btn">← Back to list</button>
       <h2>${escapeHtml(picking.name)}</h2>
-      <p class="muted">${escapeHtml(picking.origin ?? "—")} · ${escapeHtml(picking.partnerName ?? "—")}</p>
+      ${renderPickingHeaderMeta(picking)}
 
       ${renderStatusBanner(picking)}
 
@@ -442,7 +453,7 @@ async function mountPickingDetail(root: HTMLElement, picking: Picking) {
     <section class="page">
       <button id="back-to-list" type="button" class="link-btn">← Back to list</button>
       <h2>${escapeHtml(picking.name)}</h2>
-      <p class="muted">${escapeHtml(picking.origin ?? "—")} · ${escapeHtml(picking.partnerName ?? "—")}</p>
+      ${renderPickingHeaderMeta(picking)}
 
       <div class="search-row">
         <input

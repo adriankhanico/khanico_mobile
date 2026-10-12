@@ -58,6 +58,8 @@ export interface Picking {
   partnerName: string | null;
   scheduledDate: string | null;
   dateDone: string | null;
+  locationName: string | null;
+  locationDestName: string | null;
 }
 
 export type PickingStatusFilter = "pending" | "ready" | "waiting" | "done" | "all";

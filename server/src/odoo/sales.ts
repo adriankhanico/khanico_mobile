@@ -7,7 +7,7 @@ import type {
   SaleOrderSummary,
 } from "@khanico/shared";
 import type { OdooClient } from "./client.js";
-import { stripCompanyPrefix } from "./picking.js";
+import { PICKING_FIELDS, toPicking } from "./picking.js";
 
 export async function countDraftSaleOrders(client: OdooClient): Promise<number> {
   return client.searchCount("sale.order", [["state", "=", "draft"]]);
@@ -116,19 +116,9 @@ export async function getSaleOrderDetail(
     const pickingRows = await client.searchRead(
       "stock.picking",
       [["id", "in", order.picking_ids]],
-      ["id", "name", "picking_type_id", "state", "origin", "partner_id", "scheduled_date", "date_done"]
+      PICKING_FIELDS
     );
-    pickings = pickingRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      pickingTypeId: row.picking_type_id[0],
-      pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
-      state: row.state,
-      origin: row.origin || null,
-      partnerName: row.partner_id ? row.partner_id[1] : null,
-      scheduledDate: row.scheduled_date || null,
-      dateDone: row.date_done || null,
-    }));
+    pickings = pickingRows.map(toPicking);
   }
 
   const lineRows = await client.searchRead(

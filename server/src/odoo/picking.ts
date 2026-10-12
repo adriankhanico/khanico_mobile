@@ -26,6 +26,35 @@ export function stripCompanyPrefix(displayName: string): string {
   return separatorIndex === -1 ? displayName : displayName.slice(separatorIndex + 2);
 }
 
+export const PICKING_FIELDS = [
+  "id",
+  "name",
+  "picking_type_id",
+  "state",
+  "origin",
+  "partner_id",
+  "scheduled_date",
+  "date_done",
+  "location_id",
+  "location_dest_id",
+];
+
+export function toPicking(row: any): Picking {
+  return {
+    id: row.id,
+    name: row.name,
+    pickingTypeId: row.picking_type_id[0],
+    pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
+    state: row.state,
+    origin: row.origin || null,
+    partnerName: row.partner_id ? row.partner_id[1] : null,
+    scheduledDate: row.scheduled_date || null,
+    dateDone: row.date_done || null,
+    locationName: row.location_id ? row.location_id[1] : null,
+    locationDestName: row.location_dest_id ? row.location_dest_id[1] : null,
+  };
+}
+
 interface AllowedScope {
   pickingTypeIds: number[] | null;
   warehouseIds: number[] | null;
@@ -109,21 +138,11 @@ export async function listOpenPickings(
   const rows = await client.searchRead(
     "stock.picking",
     applyScopeToDomain(domain, scope),
-    ["id", "name", "picking_type_id", "state", "origin", "partner_id", "scheduled_date", "date_done"],
+    PICKING_FIELDS,
     { limit: 200, order: "id desc" }
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    pickingTypeId: row.picking_type_id[0],
-    pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
-    state: row.state,
-    origin: row.origin || null,
-    partnerName: row.partner_id ? row.partner_id[1] : null,
-    scheduledDate: row.scheduled_date || null,
-    dateDone: row.date_done || null,
-  }));
+  return rows.map(toPicking);
 }
 
 export async function listOpenPickingsGrouped(
@@ -170,21 +189,10 @@ export async function getPicking(client: OdooClient, pickingId: number): Promise
   const rows = await client.searchRead(
     "stock.picking",
     applyScopeToDomain([["id", "=", pickingId]], scope),
-    ["id", "name", "picking_type_id", "state", "origin", "partner_id", "scheduled_date", "date_done"]
+    PICKING_FIELDS
   );
   if (rows.length === 0) return null;
-  const row = rows[0];
-  return {
-    id: row.id,
-    name: row.name,
-    pickingTypeId: row.picking_type_id[0],
-    pickingTypeName: stripCompanyPrefix(row.picking_type_id[1]),
-    state: row.state,
-    origin: row.origin || null,
-    partnerName: row.partner_id ? row.partner_id[1] : null,
-    scheduledDate: row.scheduled_date || null,
-    dateDone: row.date_done || null,
-  };
+  return toPicking(rows[0]);
 }
 
 export async function getPickingTypeSettings(
